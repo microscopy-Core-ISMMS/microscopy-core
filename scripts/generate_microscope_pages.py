@@ -492,7 +492,7 @@ for microscope_dir in (
 
 
     # ----------------------------------------------
-    # Find laser-power trend plots
+    # Find interactive calibration plots
     # ----------------------------------------------
 
     calibration_plots = []
@@ -504,7 +504,7 @@ for microscope_dir in (
                 plot
                 for plot
                 in plot_dir.glob(
-                    "laser_power_*nm.png"
+                    "laser_power_*nm.html"
                 )
                 if not
                 plot.name.startswith(
@@ -516,7 +516,7 @@ for microscope_dir in (
 
 
     # ----------------------------------------------
-    # Find maximum-power plots
+    # Find interactive maximum-power plots
     # ----------------------------------------------
 
     maximum_plots = []
@@ -525,7 +525,7 @@ for microscope_dir in (
 
         maximum_plots = sorted(
             plot_dir.glob(
-                "laser_power_max_*nm.png"
+                "laser_power_max_*nm.html"
             ),
             key=wavelength_from_name,
         )
@@ -571,17 +571,36 @@ for microscope_dir in (
         "---",
         f'title: "{title}"',
         "toc: true",
-        "lightbox: true",
+        "format:",
+        "  html:",
+        "    page-layout: full",
+        "    grid:",
+        "      body-width: 1250px",
+        "      margin-width: 220px",
+        "      gutter-width: 1.5rem",
         "other-links:",
         (
             '  - text: '
-            '"← Back to Laser Power '
-            'Measurements"'
+            '"← Back to Laser Power Measurements"'
         ),
         "    href: index.html",
         "---",
         "",
         "## Laser Power Measurements",
+        "",
+        (
+            "Laser calibration and maximum-power "
+            "measurements are shown below for each "
+            "available wavelength."
+        ),
+        "",
+        (
+            "These plots are interactive. Hover over "
+            "individual measurements to view values, "
+            "click legend entries to show or hide "
+            "measurements, and use the Plotly toolbar "
+            "to zoom, pan, autoscale, or reset the plot."
+        ),
         "",
     ]
 
@@ -596,12 +615,26 @@ for microscope_dir in (
             wavelengths
         ):
 
+            calibration_plot = (
+                calibration_by_wavelength.get(
+                    wavelength
+                )
+            )
+
+            maximum_plot = (
+                maximum_by_wavelength.get(
+                    wavelength
+                )
+            )
+
+
+            # ======================================
+            # Wavelength heading and grid
+            # ======================================
+
             lines.extend(
                 [
-                    (
-                        f"### "
-                        f"{wavelength} nm"
-                    ),
+                    f"### {wavelength} nm",
                     "",
                     "::: {.grid}",
                     "",
@@ -611,7 +644,7 @@ for microscope_dir in (
 
             # ======================================
             # LEFT COLUMN
-            # Laser Power Trend
+            # Laser Power Calibration
             # ======================================
 
             lines.extend(
@@ -625,33 +658,15 @@ for microscope_dir in (
                         ".p-3}"
                     ),
                     "",
-                    (
-                        "#### "
-                        "Laser Power Trend"
-                    ),
+                    "#### Laser Power Trend",
                     "",
                 ]
             )
 
 
-            calibration_plot = (
-                calibration_by_wavelength.get(
-                    wavelength
-                )
-            )
+            if calibration_plot is not None:
 
-
-            if (
-                calibration_plot
-                is not None
-            ):
-
-                plot_title = (
-                    "Laser Power - "
-                    f"{wavelength} nm"
-                )
-
-                image_path = (
+                calibration_plot_path = (
                     "../../outputs/"
                     f"{microscope}/"
                     "plots/"
@@ -660,10 +675,19 @@ for microscope_dir in (
 
                 lines.extend(
                     [
+                        '<div class="plotly-dashboard">',
                         (
-                            f"![{plot_title}]"
-                            f"({image_path})"
+                            f'<iframe '
+                            f'src="{calibration_plot_path}" '
+                            f'width="100%" '
+                            f'height="600" '
+                            f'style="'
+                            f'border:none; '
+                            f'width:100%;" '
+                            f'loading="lazy">'
+                            f'</iframe>'
                         ),
+                        "</div>",
                         "",
                     ]
                 )
@@ -673,9 +697,8 @@ for microscope_dir in (
                 lines.extend(
                     [
                         (
-                            "No laser-power "
-                            "trend plot is "
-                            "available."
+                            "No laser-power trend "
+                            "plot is available."
                         ),
                         "",
                     ]
@@ -707,33 +730,15 @@ for microscope_dir in (
                         ".p-3}"
                     ),
                     "",
-                    (
-                        "#### Maximum "
-                        "Laser Power"
-                    ),
+                    "#### Maximum Laser Power",
                     "",
                 ]
             )
 
 
-            maximum_plot = (
-                maximum_by_wavelength.get(
-                    wavelength
-                )
-            )
+            if maximum_plot is not None:
 
-
-            if (
-                maximum_plot
-                is not None
-            ):
-
-                plot_title = (
-                    "Maximum Laser Power - "
-                    f"{wavelength} nm"
-                )
-
-                image_path = (
+                maximum_plot_path = (
                     "../../outputs/"
                     f"{microscope}/"
                     "plots/"
@@ -742,10 +747,19 @@ for microscope_dir in (
 
                 lines.extend(
                     [
+                        '<div class="plotly-dashboard">',
                         (
-                            f"![{plot_title}]"
-                            f"({image_path})"
+                            f'<iframe '
+                            f'src="{maximum_plot_path}" '
+                            f'width="100%" '
+                            f'height="600" '
+                            f'style="'
+                            f'border:none; '
+                            f'width:100%;" '
+                            f'loading="lazy">'
+                            f'</iframe>'
                         ),
+                        "</div>",
                         "",
                     ]
                 )
@@ -786,8 +800,8 @@ for microscope_dir in (
         lines.extend(
             [
                 (
-                    "No laser-power plots "
-                    "are currently available."
+                    "No interactive laser-power "
+                    "plots are currently available."
                 ),
                 "",
             ]
