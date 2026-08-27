@@ -1,9 +1,24 @@
 /.quarto/
 /_site/
 /outputs/
+
+# Python
+.venv/
+venv/
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
 
 **/*.quarto_ipynb
 quarto-*.deb
+
+# Operating systems and editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
