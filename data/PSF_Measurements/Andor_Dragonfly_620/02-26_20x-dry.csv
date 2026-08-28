@@ -1,0 +1,34 @@
+FWHM Report - PSF:0 
+HuPro 25.04.0p5 
+2026-03-03 13:08:50
+ch,maxX(µm),FWHMX(µm),precX,fit
+0,2.705,0.928,(indet)
+0,2.713,0.353,(indet),(theoretical)
+1,2.722,0.880,(indet)
+1,2.713,0.318,(indet),(theoretical)
+2,2.746,0.944,(indet)
+2,2.713,0.275,(indet),(theoretical)
+3,2.839,0.980,(indet)
+3,2.713,0.243,(indet),(theoretical)
+
+ch,maxY(µm),FWHMY(µm),precY,fit
+0,2.726,0.944,(indet)
+0,2.713,0.320,(indet),(theoretical)
+1,2.730,1.030,(indet)
+1,2.713,0.278,(indet),(theoretical)
+2,2.689,0.952,(indet)
+2,2.713,0.244,(indet),(theoretical)
+3,2.670,1.005,(indet)
+3,2.713,0.211,(indet),(theoretical)
+
+ch,maxZ(µm),FWHMZ(µm),precZ,fit
+0,5.864,2.478,(±1?)
+0,5.847,1.924,(±1?),(theoretical)
+1,5.874,2.231,(±1?)
+1,5.838,1.683,(±1?),(theoretical)
+2,5.874,2.048,(±1?)
+2,5.830,1.469,(±1?),(theoretical)
+3,6.421,2.848,(±1?)
+3,5.822,1.232,(±1?),(theoretical)
+
+
