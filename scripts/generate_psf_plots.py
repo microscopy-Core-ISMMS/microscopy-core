@@ -18,6 +18,8 @@ PSF_DATA_DIR = PROJECT_DIR / "data" / "PSF_Measurements"
 
 PSF_OUTPUT_DIR = PROJECT_DIR / "outputs" / "PSF_Measurements"
 
+MICROMETERS_TO_NANOMETERS = 1_000
+
 
 # --------------------------------------------------
 # Detect microscopes
@@ -347,10 +349,14 @@ def plot_psf_xy(
 
         channel_data = channel_data.sort_values("Date")
 
+        xy_nanometers = (
+            channel_data["AvgXY"] * MICROMETERS_TO_NANOMETERS
+        )
+
         figure.add_trace(
             go.Scatter(
                 x=channel_data["Date"],
-                y=channel_data["AvgXY"],
+                y=xy_nanometers,
                 mode="lines+markers",
                 name=channel,
                 line=dict(
@@ -363,7 +369,7 @@ def plot_psf_xy(
                 hovertemplate=(
                     "<b>%{fullData.name}</b><br>"
                     "Date: %{x|%b %Y}<br>"
-                    "XY: %{y:.3f} µm"
+                    "XY: %{y:.0f} nm"
                     "<extra></extra>"
                 ),
             )
@@ -377,7 +383,7 @@ def plot_psf_xy(
     figure.update_layout(
         title=(f"PSF XY - Objective " f"{objective.upper()}"),
         xaxis_title="Date",
-        yaxis_title="XY (µm)",
+        yaxis_title="XY (nm)",
         legend_title="Channel",
         template="plotly_white",
         hovermode="x unified",
@@ -454,10 +460,14 @@ def plot_psf_z(
 
         channel_data = channel_data.sort_values("Date")
 
+        z_nanometers = (
+            channel_data["MaxZ"] * MICROMETERS_TO_NANOMETERS
+        )
+
         figure.add_trace(
             go.Scatter(
                 x=channel_data["Date"],
-                y=channel_data["MaxZ"],
+                y=z_nanometers,
                 mode="lines+markers",
                 name=channel,
                 line=dict(
@@ -470,7 +480,7 @@ def plot_psf_z(
                 hovertemplate=(
                     "<b>%{fullData.name}</b><br>"
                     "Date: %{x|%b %Y}<br>"
-                    "Z: %{y:.3f} µm"
+                    "Z: %{y:.0f} nm"
                     "<extra></extra>"
                 ),
             )
@@ -484,7 +494,7 @@ def plot_psf_z(
     figure.update_layout(
         title=(f"PSF Z - Objective " f"{objective.upper()}"),
         xaxis_title="Date",
-        yaxis_title="Z (µm)",
+        yaxis_title="Z (nm)",
         legend_title="Channel",
         template="plotly_white",
         hovermode="x unified",
