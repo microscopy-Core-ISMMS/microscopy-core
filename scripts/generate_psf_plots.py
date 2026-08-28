@@ -349,9 +349,7 @@ def plot_psf_xy(
 
         channel_data = channel_data.sort_values("Date")
 
-        xy_nanometers = (
-            channel_data["AvgXY"] * MICROMETERS_TO_NANOMETERS
-        )
+        xy_nanometers = channel_data["AvgXY"] * MICROMETERS_TO_NANOMETERS
 
         figure.add_trace(
             go.Scatter(
@@ -460,9 +458,7 @@ def plot_psf_z(
 
         channel_data = channel_data.sort_values("Date")
 
-        z_nanometers = (
-            channel_data["MaxZ"] * MICROMETERS_TO_NANOMETERS
-        )
+        z_nanometers = channel_data["MaxZ"] * MICROMETERS_TO_NANOMETERS
 
         figure.add_trace(
             go.Scatter(
