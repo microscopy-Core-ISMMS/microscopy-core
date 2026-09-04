@@ -1,6 +1,11 @@
 /.quarto/
 /_site/
 /outputs/
+/_navbar.yml
+
+# Generated microscope pages (landing pages remain tracked)
+/microscopes/laser_power/*_*.qmd
+/microscopes/psf/*_*.qmd
 
 # Python
 .venv/

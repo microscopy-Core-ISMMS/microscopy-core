@@ -1,17 +1,106 @@
 ---
 title: "Point Spread Function Measurements"
-toc: true
+toc: false
+format:
+  html:
+    page-layout: full
+    grid:
+      body-width: 1180px
+      gutter-width: 2rem
 ---
 
-## Lateral and Axial resolution of the microscopes
+::: {.laser-introduction .psf-introduction}
+## Introduction
 
-Quality assurance of axial and lateral resolution, typically assessed by measuring the Point Spread Function (PSF), is essential because it verifies whether a microscope can truly resolve fine details as expected. Even small deviations in the PSF can reduce image sharpness, distort structures, and compromise quantitative measurements. 
+Quality assurance of axial and lateral resolution, typically assessed by measuring the point spread function (PSF), verifies whether a microscope can resolve fine details as expected. Even small deviations in the PSF can reduce image sharpness, distort structures, and compromise quantitative measurements.
 
-Optical components drift, age, or become misaligned over time, causing gradual loss of resolution. By routinely evaluating the PSF, we can detect these changes early, ensure the system performs consistently, and maintain reliable, reproducible data. In short, PSF monitoring provides the foundation for trustworthy imaging and accurate downstream analysis. 
+Optical components drift, age, or become misaligned over time, causing gradual loss of resolution. Routine PSF monitoring helps detect these changes early and supports consistent, reproducible imaging.
+:::
 
-## Confocal Microscopes
+## Microscope dashboards
 
-Select a confocal microscope to view its PSF measurements.
+<div class="microscope-grid">
+<a class="microscope-card" href="Andor_Dragonfly_620.html">
+<div class="microscope-card-top">
+<h3>Andor Dragonfly 620</h3>
+<span aria-hidden="true" class="card-arrow">→</span>
+</div>
+<span class="status-pill status-neutral">Measurements available</span>
+<div class="microscope-card-meta">
+<span><strong>3</strong> objectives</span>
+<span>Latest: Jun 2026</span>
+</div>
+</a>
+<a class="microscope-card" href="Leica_SP8_AOBS.html">
+<div class="microscope-card-top">
+<h3>Leica SP8 AOBS</h3>
+<span aria-hidden="true" class="card-arrow">→</span>
+</div>
+<span class="status-pill status-neutral">Measurements available</span>
+<div class="microscope-card-meta">
+<span><strong>4</strong> objectives</span>
+<span>Latest: Aug 2026</span>
+</div>
+</a>
+<a class="microscope-card" href="Leica_SP8_Icahn.html">
+<div class="microscope-card-top">
+<h3>Leica SP8 Icahn</h3>
+<span aria-hidden="true" class="card-arrow">→</span>
+</div>
+<span class="status-pill status-neutral">Measurements available</span>
+<div class="microscope-card-meta">
+<span><strong>5</strong> objectives</span>
+<span>Latest: Aug 2026</span>
+</div>
+</a>
+<a class="microscope-card" href="Leica_STED.html">
+<div class="microscope-card-top">
+<h3>Leica STED</h3>
+<span aria-hidden="true" class="card-arrow">→</span>
+</div>
+<span class="status-pill status-neutral">Measurements available</span>
+<div class="microscope-card-meta">
+<span><strong>5</strong> objectives</span>
+<span>Latest: May 2026</span>
+</div>
+</a>
+<a class="microscope-card" href="Zeiss_LSM780.html">
+<div class="microscope-card-top">
+<h3>Zeiss LSM780</h3>
+<span aria-hidden="true" class="card-arrow">→</span>
+</div>
+<span class="status-pill status-neutral">Measurements available</span>
+<div class="microscope-card-meta">
+<span><strong>5</strong> objectives</span>
+<span>Latest: Jul 2026</span>
+</div>
+</a>
+<a class="microscope-card" href="Zeiss_LSM880.html">
+<div class="microscope-card-top">
+<h3>Zeiss LSM880</h3>
+<span aria-hidden="true" class="card-arrow">→</span>
+</div>
+<span class="status-pill status-neutral">Measurements available</span>
+<div class="microscope-card-meta">
+<span><strong>6</strong> objectives</span>
+<span>Latest: Mar 2026</span>
+</div>
+</a>
+<a class="microscope-card" href="Zeiss_LSM980.html">
+<div class="microscope-card-top">
+<h3>Zeiss LSM980</h3>
+<span aria-hidden="true" class="card-arrow">→</span>
+</div>
+<span class="status-pill status-neutral">Measurements available</span>
+<div class="microscope-card-meta">
+<span><strong>5</strong> objectives</span>
+<span>Latest: Jun 2026</span>
+</div>
+</a>
+</div>
 
-- [LSM 880](LSM_880.qmd)
-- [LSM 980](LSM_980.qmd)
+::: {.qa-method-note}
+#### Reading the PSF dashboards
+
+Lateral (XY) and axial (Z) values are displayed in nanometers. Use each objective dashboard to compare channels and follow resolution measurements across acquisition dates.
+:::

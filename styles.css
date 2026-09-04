@@ -1,35 +1,674 @@
-@media (min-width: 992px) {
+:root {
+  --core-ink: #17253f;
+  --core-muted: #64748b;
+  --core-line: #dce4ec;
+  --core-surface: #ffffff;
+  --core-canvas: #f5f8fb;
+  --core-navy: #1a2e5a;
+  --core-blue: #0787b5;
+  --core-cyan: #12a9cf;
+  --core-success: #13795b;
+  --core-success-bg: #e8f6f0;
+  --core-warning: #a34712;
+  --core-warning-bg: #fff0e6;
+  --core-neutral-bg: #edf2f7;
+  --core-radius: 16px;
+  --core-shadow: 0 10px 30px rgb(26 46 90 / 8%);
+}
 
-  /* Open first-level dropdown on hover */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  color: var(--core-ink);
+  background: var(--core-canvas);
+  font-feature-settings: "kern", "liga";
+}
+
+a {
+  color: #087da7;
+}
+
+.navbar {
+  background: rgb(255 255 255 / 96%) !important;
+  border-bottom: 1px solid rgb(23 37 63 / 8%);
+  box-shadow: 0 2px 16px rgb(26 46 90 / 6%);
+  backdrop-filter: blur(12px);
+}
+
+.navbar .navbar-brand,
+.navbar .nav-link {
+  color: var(--core-ink) !important;
+}
+
+.navbar .nav-link:hover,
+.navbar .nav-link:focus,
+.navbar .nav-link.active {
+  color: #087da7 !important;
+}
+
+.quarto-title h1.title {
+  color: var(--core-navy);
+  font-weight: 750;
+  letter-spacing: -0.035em;
+}
+
+/* MABC logo beneath the page title, matching the previous GitHub page. */
+#title-block-header .quarto-title::after {
+  display: block;
+  width: 640px;
+  max-width: 100%;
+  height: 240px;
+  margin-top: 15px;
+  content: "";
+  background-image: url("images/core_logo.png");
+  background-repeat: no-repeat;
+  background-position: left center;
+  background-size: contain;
+}
+
+.page-columns .content {
+  min-width: 0;
+}
+
+@media (min-width: 992px) {
   .navbar .dropdown:hover > .dropdown-menu {
     display: block;
   }
 
-  /* Position nested dropdown beside parent */
   .navbar .dropdown-menu .dropdown-menu {
     top: 0;
     left: 100%;
     margin-top: 0;
   }
 
-  /* Open nested dropdown on hover */
   .navbar .dropdown-menu li:hover > .dropdown-menu {
     display: block;
   }
 }
-/* MABC logo below the page title */
-#title-block-header .quarto-title::after {
+
+.laser-landing-hero {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(2rem, 5vw, 4.5rem);
+  margin: 0 0 2.75rem;
+  color: #fff;
+  background:
+    radial-gradient(circle at 88% 10%, rgb(18 169 207 / 45%), transparent 32%),
+    linear-gradient(125deg, #172653 0%, #253f78 60%, #087fa9 100%);
+  border-radius: 24px;
+  box-shadow: 0 24px 60px rgb(23 38 83 / 18%);
+}
+
+.laser-landing-hero::after {
+  position: absolute;
+  right: -6rem;
+  bottom: -9rem;
+  width: 22rem;
+  height: 22rem;
   content: "";
+  border: 1px solid rgb(255 255 255 / 24%);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 3rem rgb(255 255 255 / 5%),
+    0 0 0 7rem rgb(255 255 255 / 4%);
+}
+
+.laser-landing-hero h2 {
+  position: relative;
+  z-index: 1;
+  max-width: 720px;
+  margin: 0 0 1rem;
+  color: #fff;
+  font-size: clamp(2rem, 4vw, 3.6rem);
+  font-weight: 760;
+  letter-spacing: -0.045em;
+  line-height: 1.02;
+}
+
+.laser-landing-hero > p:last-of-type {
+  position: relative;
+  z-index: 1;
+  max-width: 720px;
+  margin: 0;
+  color: rgb(255 255 255 / 82%);
+  font-size: 1.08rem;
+  line-height: 1.7;
+}
+
+.laser-eyebrow {
+  margin: 0 0 0.8rem;
+  color: var(--core-cyan);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.laser-landing-hero .laser-eyebrow {
+  color: #7ee4ff;
+}
+
+.laser-introduction {
+  max-width: 960px;
+  padding: clamp(1.25rem, 3vw, 2rem);
+  margin: 0 0 2.5rem;
+  background: var(--core-surface);
+  border: 1px solid var(--core-line);
+  border-left: 4px solid var(--core-cyan);
+  border-radius: var(--core-radius);
+  box-shadow: 0 6px 22px rgb(26 46 90 / 5%);
+}
+
+.laser-introduction h2 {
+  margin-top: 0;
+  color: var(--core-navy);
+  font-weight: 750;
+}
+
+.laser-introduction p:last-child {
+  margin-bottom: 0;
+}
+
+.microscope-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+  margin: 1.25rem 0 2.5rem;
+}
+
+.microscope-card {
+  display: flex;
+  min-height: 185px;
+  padding: 1.5rem;
+  color: var(--core-ink) !important;
+  text-decoration: none;
+  background: var(--core-surface);
+  border: 1px solid var(--core-line);
+  border-radius: var(--core-radius);
+  box-shadow: 0 4px 18px rgb(26 46 90 / 5%);
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+  flex-direction: column;
+}
+
+.microscope-card:hover,
+.microscope-card:focus-visible {
+  border-color: rgb(18 169 207 / 55%);
+  box-shadow: var(--core-shadow);
+  transform: translateY(-3px);
+}
+
+.microscope-card:focus-visible {
+  outline: 3px solid rgb(18 169 207 / 28%);
+  outline-offset: 3px;
+}
+
+.microscope-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.microscope-card-top p {
+  margin: 0;
+}
+
+.microscope-card h3 {
+  margin: 0 0 1rem;
+  color: var(--core-navy);
+  font-size: 1.2rem;
+  font-weight: 750;
+}
+
+.card-arrow {
+  color: var(--core-blue);
+  font-size: 1.4rem;
+  transition: transform 160ms ease;
+}
+
+.microscope-card:hover .card-arrow {
+  transform: translateX(4px);
+}
+
+.microscope-card-meta {
+  display: flex;
+  margin-top: auto;
+  color: var(--core-muted);
+  font-size: 0.82rem;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.microscope-card-meta p {
+  display: flex;
+  width: 100%;
+  margin: 0;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.microscope-card-meta strong {
+  color: var(--core-ink);
+}
+
+.qa-method-note {
+  padding: 1.4rem 1.5rem;
+  margin: 2rem 0;
+  background: #edf8fb;
+  border: 1px solid #ccebf3;
+  border-left: 4px solid var(--core-cyan);
+  border-radius: 12px;
+}
+
+.qa-method-note h4 {
+  margin-top: 0;
+  color: var(--core-navy);
+}
+
+.qa-method-note p:last-child {
+  margin-bottom: 0;
+}
+
+.laser-dashboard-hero {
+  display: flex;
+  padding: 2rem;
+  margin-bottom: 1.25rem;
+  background: linear-gradient(120deg, #fff 0%, #f0f8fb 100%);
+  border: 1px solid var(--core-line);
+  border-radius: var(--core-radius);
+  box-shadow: var(--core-shadow);
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.laser-dashboard-heading h2 {
+  margin: 0 0 0.55rem;
+  color: var(--core-navy);
+  font-size: clamp(1.65rem, 3vw, 2.35rem);
+  font-weight: 760;
+  letter-spacing: -0.035em;
+}
+
+.laser-dashboard-heading > p:last-child {
+  max-width: 680px;
+  margin: 0;
+  color: var(--core-muted);
+}
+
+.status-pill {
+  display: inline-flex;
+  width: fit-content;
+  padding: 0.38rem 0.7rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 0.73rem;
+  font-weight: 750;
+  line-height: 1.1;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.status-pill::before {
+  width: 0.45rem;
+  height: 0.45rem;
+  content: "";
+  background: currentcolor;
+  border-radius: 50%;
+}
+
+.status-pass {
+  color: var(--core-success);
+  background: var(--core-success-bg);
+  border-color: #bfe5d5;
+}
+
+.status-review {
+  color: var(--core-warning);
+  background: var(--core-warning-bg);
+  border-color: #f4cbaa;
+}
+
+.status-neutral {
+  color: #566578;
+  background: var(--core-neutral-bg);
+  border-color: #d7e0e8;
+}
+
+.status-large {
+  padding: 0.55rem 0.85rem;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.laser-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.9rem;
+  margin-bottom: 1.25rem;
+}
+
+.laser-kpi {
+  display: flex;
+  min-height: 112px;
+  padding: 1.15rem 1.25rem;
+  background: var(--core-surface);
+  border: 1px solid var(--core-line);
+  border-radius: 14px;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.laser-kpi p {
+  display: flex;
+  height: 100%;
+  margin: 0;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.kpi-label,
+.metric-label {
+  color: var(--core-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.065em;
+  text-transform: uppercase;
+}
+
+.kpi-value {
+  color: var(--core-navy);
+  font-size: 2rem;
+  font-weight: 760;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.kpi-value-text {
+  font-size: 1.25rem;
+  letter-spacing: -0.02em;
+}
+
+.wavelength-nav {
+  display: flex;
+  padding: 0.75rem;
+  margin: 1.5rem 0 2rem;
+  overflow-x: auto;
+  background: rgb(255 255 255 / 75%);
+  border: 1px solid var(--core-line);
+  border-radius: 14px;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.wavelength-nav-label {
+  padding: 0 0.5rem;
+  color: var(--core-muted);
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.wavelength-nav a {
+  display: inline-flex;
+  padding: 0.48rem 0.72rem;
+  color: var(--core-ink);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  background: #fff;
+  border: 1px solid var(--core-line);
+  border-radius: 999px;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.wavelength-nav a:hover,
+.wavelength-nav a:focus-visible {
+  border-color: var(--laser-color);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--laser-color) 15%, transparent);
+}
+
+.wavelength-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  background: var(--laser-color);
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--laser-color) 14%, transparent);
+}
+
+.laser-wave-section {
+  padding: clamp(1rem, 2vw, 1.6rem);
+  margin: 0 0 1.5rem;
+  background: var(--core-surface);
+  border: 1px solid var(--core-line);
+  border-top: 4px solid var(--laser-color);
+  border-radius: var(--core-radius);
+  box-shadow: 0 8px 24px rgb(26 46 90 / 6%);
+  scroll-margin-top: 5rem;
+}
+
+.laser-wave-section > h3 {
+  display: flex;
+  margin: 0 0 1rem;
+  color: var(--core-navy);
+  font-size: 1.45rem;
+  font-weight: 760;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.laser-wave-section > h3::before {
+  width: 0.72rem;
+  height: 0.72rem;
+  content: "";
+  background: var(--laser-color);
+  border-radius: 50%;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--laser-color) 15%, transparent);
+}
+
+.wave-summary-row {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr 1fr auto;
+  gap: 1rem;
+  padding: 1rem 1.1rem;
+  margin-bottom: 1rem;
+  background: #f8fafc;
+  border: 1px solid #e5ebf1;
+  border-radius: 12px;
+  align-items: center;
+}
+
+.wave-latest,
+.wave-metric,
+.wave-status {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.wave-latest > p,
+.wave-metric > p,
+.wave-status > p {
+  display: flex;
+  margin: 0;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.wave-metric {
+  padding-left: 1rem;
+  border-left: 1px solid var(--core-line);
+}
+
+.wave-metric strong {
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.metric-value {
+  color: var(--core-navy);
+  font-size: 1.45rem;
+  font-weight: 760;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.metric-context {
+  color: var(--core-muted);
+  font-size: 0.8rem;
+}
+
+.wave-status {
+  align-items: flex-end;
+}
+
+.trend-label {
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.trend-up {
+  color: var(--core-success);
+}
+
+.trend-down {
+  color: var(--core-warning);
+}
+
+.trend-neutral {
+  color: var(--core-muted);
+}
+
+.laser-chart-card {
+  min-width: 0;
+  padding: 1rem;
+  background: #fff;
+  border: 1px solid var(--core-line);
+  border-radius: 12px;
+}
+
+.laser-chart-card h4 {
+  margin: 0;
+  color: var(--core-navy);
+  font-size: 1rem;
+  font-weight: 750;
+}
+
+.chart-description {
+  min-height: 2.5em;
+  margin: 0.25rem 0 0.75rem;
+  color: var(--core-muted);
+  font-size: 0.8rem;
+}
+
+.plotly-dashboard {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.plotly-dashboard iframe {
   display: block;
+  width: 100%;
+  background: #fff;
+}
 
-  width: 640px;
-  max-width: 100%;
-  height: 240px;
+.btn-primary {
+  background: var(--core-blue);
+  border-color: var(--core-blue);
+}
 
-  margin-top: 15px;
+.btn-primary:hover,
+.btn-primary:focus {
+  background: #086f95;
+  border-color: #086f95;
+}
 
-  background-image: url("images/core_logo.png");
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: left center;
+.btn-outline-primary {
+  color: var(--core-blue);
+  border-color: var(--core-blue);
+}
+
+.btn-outline-primary:hover,
+.btn-outline-primary:focus {
+  color: #fff;
+  background: var(--core-blue);
+  border-color: var(--core-blue);
+}
+
+@media (max-width: 991px) {
+  .laser-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .wave-summary-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .wave-status {
+    padding-left: 1rem;
+    border-left: 1px solid var(--core-line);
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 620px) {
+  .laser-dashboard-hero {
+    padding: 1.35rem;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .laser-kpi-grid,
+  .wave-summary-row {
+    grid-template-columns: 1fr;
+  }
+
+  .laser-kpi {
+    min-height: 96px;
+  }
+
+  .wave-metric,
+  .wave-status {
+    padding: 0.75rem 0 0;
+    border-top: 1px solid var(--core-line);
+    border-left: 0;
+  }
+
+  .microscope-card-meta,
+  .microscope-card-meta p {
+    flex-direction: column;
+  }
+
+  .laser-wave-section {
+    padding: 1rem;
+  }
+
+  .laser-chart-card {
+    padding: 0.7rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }

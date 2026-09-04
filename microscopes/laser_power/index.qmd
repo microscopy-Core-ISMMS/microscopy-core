@@ -1,22 +1,128 @@
 ---
 title: "Laser Power Measurements"
-toc: true
+toc: false
+format:
+  html:
+    page-layout: full
+    grid:
+      body-width: 1180px
+      gutter-width: 2rem
 ---
-- [Introduction](#introduction)
-- [Laser Power Results](#laser-power-results)
 
+::: {.laser-introduction}
 ## Introduction
 
 Quality assurance of illumination power stability is critical because fluorescence intensity measurements depend directly on the excitation power delivered to the sample. Under standard imaging conditions, the emitted fluorescence signal is proportional to the fluorophore concentration and the excitation light intensity. Any fluctuation in illumination power can therefore alter measured signal levels, potentially leading to incorrect conclusions about changes in fluorophore abundance, molecular interactions, or cellular dynamics. Ensuring stable and reproducible excitation conditions is essential for reliable quantitative fluorescence imaging.
 
 Over time, illumination sources such as lasers or LEDs can exhibit fluctuations due to component aging, temperature changes, electronic instability, or optical misalignment within the light path. These variations may occur over multiple time scales and can introduce unwanted variability between images acquired during a single experiment or across different experimental sessions. Routine monitoring of illumination power stability allows early detection of such fluctuations and helps ensure that excitation conditions remain consistent and reproducible.
+:::
 
-...
+## Microscope dashboards
 
-## Confocal Microscopes
+<div class="microscope-grid">
+<a class="microscope-card" href="Andor_Dragonfly_620.html">
+<div class="microscope-card-top">
+<h3>Andor Dragonfly 620</h3>
+<span aria-hidden="true" class="card-arrow">→</span>
+</div>
+<span class="status-pill status-pass">All channels within spec</span>
+<div class="microscope-card-meta">
+<span><strong>7</strong> wavelengths</span>
+<span>Latest: May 2026</span>
+</div>
+</a>
+<a class="microscope-card" href="Leica_SP8_AOBS.html">
+<div class="microscope-card-top">
+<h3>Leica SP8 AOBS</h3>
+<span aria-hidden="true" class="card-arrow">→</span>
+</div>
+<span class="status-pill status-pass">All channels within spec</span>
+<div class="microscope-card-meta">
+<span><strong>5</strong> wavelengths</span>
+<span>Latest: Jan 2026</span>
+</div>
+</a>
+<a class="microscope-card" href="Leica_SP8_Icahn.html">
+<div class="microscope-card-top">
+<h3>Leica SP8 Icahn</h3>
+<span aria-hidden="true" class="card-arrow">→</span>
+</div>
+<span class="status-pill status-review">3 channels to review</span>
+<div class="microscope-card-meta">
+<span><strong>5</strong> wavelengths</span>
+<span>Latest: Jun 2026</span>
+</div>
+</a>
+<a class="microscope-card" href="Leica_STED.html">
+<div class="microscope-card-top">
+<h3>Leica STED</h3>
+<span aria-hidden="true" class="card-arrow">→</span>
+</div>
+<span class="status-pill status-pass">All channels within spec</span>
+<div class="microscope-card-meta">
+<span><strong>5</strong> wavelengths</span>
+<span>Latest: Feb 2026</span>
+</div>
+</a>
+<a class="microscope-card" href="Leica_Stellaris_Atran.html">
+<div class="microscope-card-top">
+<h3>Leica Stellaris Atran</h3>
+<span aria-hidden="true" class="card-arrow">→</span>
+</div>
+<span class="status-pill status-pass">All channels within spec</span>
+<div class="microscope-card-meta">
+<span><strong>6</strong> wavelengths</span>
+<span>Latest: Feb 2026</span>
+</div>
+</a>
+<a class="microscope-card" href="Leica_Stellaris_W619.html">
+<div class="microscope-card-top">
+<h3>Leica Stellaris W619</h3>
+<span aria-hidden="true" class="card-arrow">→</span>
+</div>
+<span class="status-pill status-pass">All channels within spec</span>
+<div class="microscope-card-meta">
+<span><strong>6</strong> wavelengths</span>
+<span>Latest: Aug 2026</span>
+</div>
+</a>
+<a class="microscope-card" href="Zeiss_LSM780.html">
+<div class="microscope-card-top">
+<h3>Zeiss LSM780</h3>
+<span aria-hidden="true" class="card-arrow">→</span>
+</div>
+<span class="status-pill status-pass">All channels within spec</span>
+<div class="microscope-card-meta">
+<span><strong>5</strong> wavelengths</span>
+<span>Latest: Jul 2026</span>
+</div>
+</a>
+<a class="microscope-card" href="Zeiss_LSM880.html">
+<div class="microscope-card-top">
+<h3>Zeiss LSM880</h3>
+<span aria-hidden="true" class="card-arrow">→</span>
+</div>
+<span class="status-pill status-pass">All channels within spec</span>
+<div class="microscope-card-meta">
+<span><strong>7</strong> wavelengths</span>
+<span>Latest: Mar 2026</span>
+</div>
+</a>
+<a class="microscope-card" href="Zeiss_LSM980.html">
+<div class="microscope-card-top">
+<h3>Zeiss LSM980</h3>
+<span aria-hidden="true" class="card-arrow">→</span>
+</div>
+<span class="status-pill status-pass">All channels within spec</span>
+<div class="microscope-card-meta">
+<span><strong>8</strong> wavelengths</span>
+<span>Latest: Jun 2026</span>
+</div>
+</a>
+</div>
 
-Select a confocal microscope to view its laser-power quality assurance results.
+::: {.qa-method-note}
+#### How status is determined
 
-
-- [LSM 880](LSM_880.qmd)
-- [LSM 980](LSM_980.qmd)
+A channel is flagged for review when its latest measured maximum falls below 70% of the configured reference measurement. Use the interactive trend to assess changes over time before making an experimental decision.
+:::
