@@ -309,9 +309,9 @@ def read_psf_summary(combined_csv: Path) -> list[dict]:
         if len(dates) > 1:
             previous_rows = [row for row in rows if row.get("Date") == dates[-2]]
 
-        latest_xy = average_values(latest_rows, "AvgXY")
-        latest_z = average_values(latest_rows, "MaxZ")
-        previous_xy = average_values(previous_rows, "AvgXY")
+        latest_xy = average_values(latest_rows, "AvgFWHMXY")
+        latest_z = average_values(latest_rows, "FWHMZ")
+        previous_xy = average_values(previous_rows, "AvgFWHMXY")
         xy_change_percent = None
 
         if latest_xy is not None and previous_xy not in (None, 0):

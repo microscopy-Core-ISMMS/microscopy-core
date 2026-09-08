@@ -86,7 +86,7 @@ def detect_objectives(csv_files: list[Path]) -> list[str]:
 
 def parse_psf_csv(file_path: Path) -> pd.DataFrame:
     """
-    Parse MaxX, MaxY and MaxZ measurements from
+    Parse FWHMX, FWHMY and FWHMZ measurements from
     one PSF CSV file.
 
     This preserves the logic from the original
@@ -130,9 +130,9 @@ def parse_psf_csv(file_path: Path) -> pd.DataFrame:
     # ----------------------------------------------
 
     sections = {
-        "X": "maxx",
-        "Y": "maxy",
-        "Z": "maxz",
+        "X": ("maxx", "fwhmx"),
+        "Y": ("maxy", "fwhmy"),
+        "Z": ("maxz", "fwhmz"),
     }
 
     section_data = {}
@@ -141,7 +141,7 @@ def parse_psf_csv(file_path: Path) -> pd.DataFrame:
     # Parse each section
     # ----------------------------------------------
 
-    for axis, section_name in sections.items():
+    for axis, (section_name, value_column) in sections.items():
 
         header_index = next(
             (
@@ -153,6 +153,24 @@ def parse_psf_csv(file_path: Path) -> pd.DataFrame:
         )
 
         if header_index is None:
+
+            section_data[axis] = {}
+            continue
+
+        header_columns = [
+            column.strip().lower() for column in lines[header_index].split(",")
+        ]
+
+        value_index = next(
+            (
+                index
+                for index, column in enumerate(header_columns)
+                if column.startswith(value_column)
+            ),
+            None,
+        )
+
+        if value_index is None:
 
             section_data[axis] = {}
             continue
@@ -173,7 +191,7 @@ def parse_psf_csv(file_path: Path) -> pd.DataFrame:
 
             parts = line.split(",")
 
-            if len(parts) < 2:
+            if len(parts) <= value_index:
                 continue
 
             try:
@@ -184,7 +202,7 @@ def parse_psf_csv(file_path: Path) -> pd.DataFrame:
                 if channel in values:
                     continue
 
-                raw_value = parts[1].strip()
+                raw_value = parts[value_index].strip()
 
                 if raw_value == "-----":
 
@@ -257,10 +275,10 @@ def parse_psf_csv(file_path: Path) -> pd.DataFrame:
                 # Same channel numbering behavior
                 # as the original notebook
                 "Channel": (f"CH{channel + 1}"),
-                "MaxX": x,
-                "MaxY": y,
-                "AvgXY": avg_xy,
-                "MaxZ": z,
+                "FWHMX": x,
+                "FWHMY": y,
+                "AvgFWHMXY": avg_xy,
+                "FWHMZ": z,
                 "SourceFile": (file_path.name),
             }
         )
@@ -342,14 +360,14 @@ def plot_psf_xy(
 
         channel_data = dataframe[dataframe["Channel"] == channel].copy()
 
-        channel_data = channel_data[channel_data["AvgXY"].notna()]
+        channel_data = channel_data[channel_data["AvgFWHMXY"].notna()]
 
         if channel_data.empty:
             continue
 
         channel_data = channel_data.sort_values("Date")
 
-        xy_nanometers = channel_data["AvgXY"] * MICROMETERS_TO_NANOMETERS
+        xy_nanometers = channel_data["AvgFWHMXY"] * MICROMETERS_TO_NANOMETERS
 
         figure.add_trace(
             go.Scatter(
@@ -451,14 +469,14 @@ def plot_psf_z(
 
         channel_data = dataframe[dataframe["Channel"] == channel].copy()
 
-        channel_data = channel_data[channel_data["MaxZ"].notna()]
+        channel_data = channel_data[channel_data["FWHMZ"].notna()]
 
         if channel_data.empty:
             continue
 
         channel_data = channel_data.sort_values("Date")
 
-        z_nanometers = channel_data["MaxZ"] * MICROMETERS_TO_NANOMETERS
+        z_nanometers = channel_data["FWHMZ"] * MICROMETERS_TO_NANOMETERS
 
         figure.add_trace(
             go.Scatter(
