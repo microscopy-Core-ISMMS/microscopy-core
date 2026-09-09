@@ -1124,6 +1124,8 @@ psf_index_lines.extend(
         "",
         (
             "Lateral (XY) and axial (Z) values are displayed in nanometers. "
+            "Solid lines show measured FWHM values; dashed lines show the "
+            "corresponding theoretical values when supplied by the report. "
             "Use each objective dashboard to compare channels and follow "
             "resolution measurements across acquisition dates."
         ),

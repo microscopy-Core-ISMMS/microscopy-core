@@ -137,6 +137,8 @@ def parse_psf_csv(file_path: Path) -> pd.DataFrame:
 
     section_data = {}
 
+    theoretical_data = {}
+
     # ----------------------------------------------
     # Parse each section
     # ----------------------------------------------
@@ -155,6 +157,7 @@ def parse_psf_csv(file_path: Path) -> pd.DataFrame:
         if header_index is None:
 
             section_data[axis] = {}
+            theoretical_data[axis] = {}
             continue
 
         header_columns = [
@@ -173,9 +176,12 @@ def parse_psf_csv(file_path: Path) -> pd.DataFrame:
         if value_index is None:
 
             section_data[axis] = {}
+            theoretical_data[axis] = {}
             continue
 
         values = {}
+
+        theoretical_values = {}
 
         for line in lines[header_index + 1 :]:
 
@@ -198,8 +204,12 @@ def parse_psf_csv(file_path: Path) -> pd.DataFrame:
 
                 channel = int(parts[0])
 
+                is_theoretical = any("theoretical" in part.lower() for part in parts)
+
+                target_values = theoretical_values if is_theoretical else values
+
                 # Avoid duplicate entries
-                if channel in values:
+                if channel in target_values:
                     continue
 
                 raw_value = parts[value_index].strip()
@@ -215,7 +225,7 @@ def parse_psf_csv(file_path: Path) -> pd.DataFrame:
                     if value == 0:
                         value = np.nan
 
-                values[channel] = value
+                target_values[channel] = value
 
             except (
                 ValueError,
@@ -225,6 +235,7 @@ def parse_psf_csv(file_path: Path) -> pd.DataFrame:
                 continue
 
         section_data[axis] = values
+        theoretical_data[axis] = theoretical_values
 
     # ----------------------------------------------
     # Determine all channels
@@ -235,6 +246,9 @@ def parse_psf_csv(file_path: Path) -> pd.DataFrame:
             list(section_data["X"].keys())
             + list(section_data["Y"].keys())
             + list(section_data["Z"].keys())
+            + list(theoretical_data["X"].keys())
+            + list(theoretical_data["Y"].keys())
+            + list(theoretical_data["Z"].keys())
         )
     )
 
@@ -261,6 +275,21 @@ def parse_psf_csv(file_path: Path) -> pd.DataFrame:
             np.nan,
         )
 
+        theoretical_x = theoretical_data["X"].get(
+            channel,
+            np.nan,
+        )
+
+        theoretical_y = theoretical_data["Y"].get(
+            channel,
+            np.nan,
+        )
+
+        theoretical_z = theoretical_data["Z"].get(
+            channel,
+            np.nan,
+        )
+
         if np.isnan(x) and np.isnan(y):
 
             avg_xy = np.nan
@@ -268,6 +297,14 @@ def parse_psf_csv(file_path: Path) -> pd.DataFrame:
         else:
 
             avg_xy = np.nanmean([x, y])
+
+        if np.isnan(theoretical_x) and np.isnan(theoretical_y):
+
+            avg_theoretical_xy = np.nan
+
+        else:
+
+            avg_theoretical_xy = np.nanmean([theoretical_x, theoretical_y])
 
         records.append(
             {
@@ -279,6 +316,10 @@ def parse_psf_csv(file_path: Path) -> pd.DataFrame:
                 "FWHMY": y,
                 "AvgFWHMXY": avg_xy,
                 "FWHMZ": z,
+                "TheoreticalFWHMX": theoretical_x,
+                "TheoreticalFWHMY": theoretical_y,
+                "AvgTheoreticalFWHMXY": avg_theoretical_xy,
+                "TheoreticalFWHMZ": theoretical_z,
                 "SourceFile": (file_path.name),
             }
         )
@@ -360,38 +401,77 @@ def plot_psf_xy(
 
         channel_data = dataframe[dataframe["Channel"] == channel].copy()
 
-        channel_data = channel_data[channel_data["AvgFWHMXY"].notna()]
-
-        if channel_data.empty:
-            continue
-
         channel_data = channel_data.sort_values("Date")
 
-        xy_nanometers = channel_data["AvgFWHMXY"] * MICROMETERS_TO_NANOMETERS
+        measured_data = channel_data[channel_data["AvgFWHMXY"].notna()]
 
-        figure.add_trace(
-            go.Scatter(
-                x=channel_data["Date"],
-                y=xy_nanometers,
-                mode="lines+markers",
-                name=channel,
-                line=dict(
-                    color=channel_colors.get(channel),
-                    width=2,
-                ),
-                marker=dict(
-                    size=8,
-                ),
-                hovertemplate=(
-                    "<b>%{fullData.name}</b><br>"
-                    "Date: %{x|%b %Y}<br>"
-                    "XY: %{y:.0f} nm"
-                    "<extra></extra>"
-                ),
+        if not measured_data.empty:
+
+            xy_nanometers = measured_data["AvgFWHMXY"] * MICROMETERS_TO_NANOMETERS
+
+            figure.add_trace(
+                go.Scatter(
+                    x=measured_data["Date"],
+                    y=xy_nanometers,
+                    mode="lines+markers",
+                    name=channel,
+                    legendgroup=channel,
+                    line=dict(
+                        color=channel_colors.get(channel),
+                        width=2,
+                    ),
+                    marker=dict(
+                        size=8,
+                    ),
+                    hovertemplate=(
+                        "<b>%{fullData.name}</b><br>"
+                        "Date: %{x|%b %Y}<br>"
+                        "Measured XY: %{y:.0f} nm"
+                        "<extra></extra>"
+                    ),
+                )
             )
-        )
 
-        plotted = True
+            plotted = True
+
+        theoretical_channel_data = channel_data[
+            channel_data["AvgTheoreticalFWHMXY"].notna()
+        ]
+
+        if not theoretical_channel_data.empty:
+
+            theoretical_xy_nanometers = (
+                theoretical_channel_data["AvgTheoreticalFWHMXY"]
+                * MICROMETERS_TO_NANOMETERS
+            )
+
+            figure.add_trace(
+                go.Scatter(
+                    x=theoretical_channel_data["Date"],
+                    y=theoretical_xy_nanometers,
+                    mode="lines+markers",
+                    name=f"{channel} theoretical",
+                    legendgroup=channel,
+                    line=dict(
+                        color=channel_colors.get(channel),
+                        width=2,
+                        dash="dash",
+                    ),
+                    marker=dict(
+                        size=6,
+                        symbol="circle-open",
+                    ),
+                    opacity=0.75,
+                    hovertemplate=(
+                        "<b>%{fullData.name}</b><br>"
+                        "Date: %{x|%b %Y}<br>"
+                        "Theoretical XY: %{y:.0f} nm"
+                        "<extra></extra>"
+                    ),
+                )
+            )
+
+            plotted = True
 
     if not plotted:
         return None
@@ -469,38 +549,76 @@ def plot_psf_z(
 
         channel_data = dataframe[dataframe["Channel"] == channel].copy()
 
-        channel_data = channel_data[channel_data["FWHMZ"].notna()]
-
-        if channel_data.empty:
-            continue
-
         channel_data = channel_data.sort_values("Date")
 
-        z_nanometers = channel_data["FWHMZ"] * MICROMETERS_TO_NANOMETERS
+        measured_data = channel_data[channel_data["FWHMZ"].notna()]
 
-        figure.add_trace(
-            go.Scatter(
-                x=channel_data["Date"],
-                y=z_nanometers,
-                mode="lines+markers",
-                name=channel,
-                line=dict(
-                    color=channel_colors.get(channel),
-                    width=2,
-                ),
-                marker=dict(
-                    size=8,
-                ),
-                hovertemplate=(
-                    "<b>%{fullData.name}</b><br>"
-                    "Date: %{x|%b %Y}<br>"
-                    "Z: %{y:.0f} nm"
-                    "<extra></extra>"
-                ),
+        if not measured_data.empty:
+
+            z_nanometers = measured_data["FWHMZ"] * MICROMETERS_TO_NANOMETERS
+
+            figure.add_trace(
+                go.Scatter(
+                    x=measured_data["Date"],
+                    y=z_nanometers,
+                    mode="lines+markers",
+                    name=channel,
+                    legendgroup=channel,
+                    line=dict(
+                        color=channel_colors.get(channel),
+                        width=2,
+                    ),
+                    marker=dict(
+                        size=8,
+                    ),
+                    hovertemplate=(
+                        "<b>%{fullData.name}</b><br>"
+                        "Date: %{x|%b %Y}<br>"
+                        "Measured Z: %{y:.0f} nm"
+                        "<extra></extra>"
+                    ),
+                )
             )
-        )
 
-        plotted = True
+            plotted = True
+
+        theoretical_channel_data = channel_data[
+            channel_data["TheoreticalFWHMZ"].notna()
+        ]
+
+        if not theoretical_channel_data.empty:
+
+            theoretical_z_nanometers = (
+                theoretical_channel_data["TheoreticalFWHMZ"] * MICROMETERS_TO_NANOMETERS
+            )
+
+            figure.add_trace(
+                go.Scatter(
+                    x=theoretical_channel_data["Date"],
+                    y=theoretical_z_nanometers,
+                    mode="lines+markers",
+                    name=f"{channel} theoretical",
+                    legendgroup=channel,
+                    line=dict(
+                        color=channel_colors.get(channel),
+                        width=2,
+                        dash="dash",
+                    ),
+                    marker=dict(
+                        size=6,
+                        symbol="circle-open",
+                    ),
+                    opacity=0.75,
+                    hovertemplate=(
+                        "<b>%{fullData.name}</b><br>"
+                        "Date: %{x|%b %Y}<br>"
+                        "Theoretical Z: %{y:.0f} nm"
+                        "<extra></extra>"
+                    ),
+                )
+            )
+
+            plotted = True
 
     if not plotted:
         return None
