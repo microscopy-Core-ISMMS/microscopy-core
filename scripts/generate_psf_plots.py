@@ -417,47 +417,42 @@ def get_theoretical_reference(
     """
     Select a theoretical FWHM reference for one channel.
 
-    Use the configured target month when it has a theoretical value for the
-    series. Otherwise, mirror the laser-power behavior and use the latest
-    available theoretical value.
+    Only use the theoretical value from the configured target month. Returning
+    no reference is safer than silently substituting a different month's value.
     """
+
+    if target_month is None:
+        return None
 
     reference_data = channel_data.loc[
         channel_data["Date"].notna() & channel_data[value_column].notna()
-    ].sort_values("Date")
+    ].copy()
 
     if reference_data.empty:
         return None
 
     reference_data["ReferenceMonth"] = reference_data["Date"].dt.strftime("%Y-%m")
-    available_months = reference_data["ReferenceMonth"].tolist()
-
-    if target_month is not None and target_month in available_months:
-        reference_month = target_month
-    else:
-        reference_month = reference_data.iloc[-1]["ReferenceMonth"]
-
     reference_rows = reference_data.loc[
-        reference_data["ReferenceMonth"] == reference_month
+        reference_data["ReferenceMonth"] == target_month
     ]
+
+    if reference_rows.empty:
+        return None
 
     reference_value = float(reference_rows.iloc[-1][value_column])
 
-    return reference_value, reference_month
+    return reference_value, target_month
 
 
 def get_reference_line_dates(
     dataframe: pd.DataFrame,
 ) -> tuple[pd.Timestamp, pd.Timestamp]:
-    """Return endpoints that make a reference line span the full plot."""
+    """Return padded axis endpoints so references span the full plot width."""
 
     dates = dataframe["Date"].dropna()
-    start_date = dates.min()
-    end_date = dates.max()
-
-    if start_date == end_date:
-        start_date -= pd.Timedelta(days=15)
-        end_date += pd.Timedelta(days=15)
+    padding = pd.Timedelta(days=15)
+    start_date = dates.min() - padding
+    end_date = dates.max() + padding
 
     return start_date, end_date
 
@@ -578,6 +573,7 @@ def plot_psf_xy(
     figure.update_xaxes(
         showgrid=True,
         tickformat="%b %Y",
+        range=[reference_start, reference_end],
     )
 
     figure.update_yaxes(
@@ -725,6 +721,7 @@ def plot_psf_z(
     figure.update_xaxes(
         showgrid=True,
         tickformat="%b %Y",
+        range=[reference_start, reference_end],
     )
 
     figure.update_yaxes(
@@ -791,7 +788,7 @@ def run_psf_analysis(
 
     print(
         "Theoretical reference month:",
-        target_month or "latest available",
+        target_month or "not configured; theoretical lines will be omitted",
     )
 
     # ----------------------------------------------
@@ -947,6 +944,26 @@ def run_psf_analysis(
         df_obj = df_obj.sort_values("Date")
 
         df_obj["Date_str"] = df_obj["Date"].dt.strftime("%Y-%m")
+
+        if target_month is not None:
+            target_rows = df_obj[df_obj["Date_str"] == target_month]
+
+            if target_rows.empty:
+                print(
+                    f"No {target_month} PSF report for objective "
+                    f"{objective.upper()}; theoretical lines omitted."
+                )
+            elif (
+                not target_rows[["AvgTheoreticalFWHMXY", "TheoreticalFWHMZ"]]
+                .notna()
+                .any()
+                .any()
+            ):
+                print(
+                    f"The {target_month} PSF report for objective "
+                    f"{objective.upper()} has no theoretical values; "
+                    "theoretical lines omitted."
+                )
 
         # ------------------------------------------
         # XY plot

@@ -1126,8 +1126,8 @@ psf_index_lines.extend(
             "Lateral (XY) and axial (Z) values are displayed in nanometers. "
             "Solid lines show measured FWHM values; dashed lines show the "
             "theoretical FWHM values from the microscope's configured "
-            "reference month. If that month is unavailable for a series, the "
-            "latest available theoretical value is used. "
+            "reference month. A theoretical line is omitted when that exact "
+            "month is unavailable for an objective. "
             "Use each objective dashboard to compare channels and follow "
             "resolution measurements across acquisition dates."
         ),
