@@ -16,6 +16,8 @@ PROJECT_DIR = Path(__file__).resolve().parents[1]
 
 PSF_DATA_DIR = PROJECT_DIR / "data" / "PSF_Measurements"
 
+LASER_DATA_DIR = PROJECT_DIR / "data" / "Laser_Power_Measurements"
+
 PSF_OUTPUT_DIR = PROJECT_DIR / "outputs" / "PSF_Measurements"
 
 MICROMETERS_TO_NANOMETERS = 1_000
@@ -77,6 +79,35 @@ def detect_objectives(csv_files: list[Path]) -> list[str]:
             objectives.add(match.group(1))
 
     return sorted(objectives)
+
+
+# --------------------------------------------------
+# Read reference month
+# --------------------------------------------------
+
+
+def get_target_month(microscope: str) -> str | None:
+    """Read the laser-power reference month for a microscope."""
+
+    target_file = LASER_DATA_DIR / microscope / "target_month.txt"
+
+    if not target_file.exists():
+        return None
+
+    target_month = target_file.read_text(encoding="utf-8").strip()
+
+    if not target_month:
+        return None
+
+    try:
+        pd.Period(target_month, freq="M")
+    except ValueError as exc:
+        raise ValueError(
+            f"{target_file} must contain a month in YYYY-MM format. "
+            f"Found: {target_month}"
+        ) from exc
+
+    return target_month
 
 
 # --------------------------------------------------
@@ -378,11 +409,65 @@ def get_channel_colors(microscope: str) -> dict:
     }
 
 
+def get_theoretical_reference(
+    channel_data: pd.DataFrame,
+    value_column: str,
+    target_month: str | None,
+) -> tuple[float, str] | None:
+    """
+    Select a theoretical FWHM reference for one channel.
+
+    Use the configured target month when it has a theoretical value for the
+    series. Otherwise, mirror the laser-power behavior and use the latest
+    available theoretical value.
+    """
+
+    reference_data = channel_data.loc[
+        channel_data["Date"].notna() & channel_data[value_column].notna()
+    ].sort_values("Date")
+
+    if reference_data.empty:
+        return None
+
+    reference_data["ReferenceMonth"] = reference_data["Date"].dt.strftime("%Y-%m")
+    available_months = reference_data["ReferenceMonth"].tolist()
+
+    if target_month is not None and target_month in available_months:
+        reference_month = target_month
+    else:
+        reference_month = reference_data.iloc[-1]["ReferenceMonth"]
+
+    reference_rows = reference_data.loc[
+        reference_data["ReferenceMonth"] == reference_month
+    ]
+
+    reference_value = float(reference_rows.iloc[-1][value_column])
+
+    return reference_value, reference_month
+
+
+def get_reference_line_dates(
+    dataframe: pd.DataFrame,
+) -> tuple[pd.Timestamp, pd.Timestamp]:
+    """Return endpoints that make a reference line span the full plot."""
+
+    dates = dataframe["Date"].dropna()
+    start_date = dates.min()
+    end_date = dates.max()
+
+    if start_date == end_date:
+        start_date -= pd.Timedelta(days=15)
+        end_date += pd.Timedelta(days=15)
+
+    return start_date, end_date
+
+
 def plot_psf_xy(
     dataframe: pd.DataFrame,
     objective: str,
     output_folder: Path,
     microscope: str,
+    target_month: str | None,
 ) -> Path | None:
     """
     Create an interactive Plotly lateral PSF plot.
@@ -396,6 +481,8 @@ def plot_psf_xy(
     figure = go.Figure()
 
     plotted = False
+
+    reference_start, reference_end = get_reference_line_dates(dataframe)
 
     for channel in sorted(dataframe["Channel"].unique()):
 
@@ -434,37 +521,33 @@ def plot_psf_xy(
 
             plotted = True
 
-        theoretical_channel_data = channel_data[
-            channel_data["AvgTheoreticalFWHMXY"].notna()
-        ]
+        theoretical_reference = get_theoretical_reference(
+            channel_data,
+            "AvgTheoreticalFWHMXY",
+            target_month,
+        )
 
-        if not theoretical_channel_data.empty:
+        if theoretical_reference is not None:
 
-            theoretical_xy_nanometers = (
-                theoretical_channel_data["AvgTheoreticalFWHMXY"]
-                * MICROMETERS_TO_NANOMETERS
-            )
+            theoretical_value, reference_month = theoretical_reference
+
+            theoretical_xy_nanometers = theoretical_value * MICROMETERS_TO_NANOMETERS
 
             figure.add_trace(
                 go.Scatter(
-                    x=theoretical_channel_data["Date"],
-                    y=theoretical_xy_nanometers,
-                    mode="lines+markers",
-                    name=f"{channel} theoretical",
+                    x=[reference_start, reference_end],
+                    y=[theoretical_xy_nanometers, theoretical_xy_nanometers],
+                    mode="lines",
+                    name=f"{channel} theoretical ({reference_month})",
                     legendgroup=channel,
                     line=dict(
                         color=channel_colors.get(channel),
                         width=2,
                         dash="dash",
                     ),
-                    marker=dict(
-                        size=6,
-                        symbol="circle-open",
-                    ),
                     opacity=0.75,
                     hovertemplate=(
                         "<b>%{fullData.name}</b><br>"
-                        "Date: %{x|%b %Y}<br>"
                         "Theoretical XY: %{y:.0f} nm"
                         "<extra></extra>"
                     ),
@@ -531,6 +614,7 @@ def plot_psf_z(
     objective: str,
     output_folder: Path,
     microscope: str,
+    target_month: str | None,
 ) -> Path | None:
     """
     Create an interactive Plotly axial PSF plot.
@@ -544,6 +628,8 @@ def plot_psf_z(
     figure = go.Figure()
 
     plotted = False
+
+    reference_start, reference_end = get_reference_line_dates(dataframe)
 
     for channel in sorted(dataframe["Channel"].unique()):
 
@@ -582,36 +668,33 @@ def plot_psf_z(
 
             plotted = True
 
-        theoretical_channel_data = channel_data[
-            channel_data["TheoreticalFWHMZ"].notna()
-        ]
+        theoretical_reference = get_theoretical_reference(
+            channel_data,
+            "TheoreticalFWHMZ",
+            target_month,
+        )
 
-        if not theoretical_channel_data.empty:
+        if theoretical_reference is not None:
 
-            theoretical_z_nanometers = (
-                theoretical_channel_data["TheoreticalFWHMZ"] * MICROMETERS_TO_NANOMETERS
-            )
+            theoretical_value, reference_month = theoretical_reference
+
+            theoretical_z_nanometers = theoretical_value * MICROMETERS_TO_NANOMETERS
 
             figure.add_trace(
                 go.Scatter(
-                    x=theoretical_channel_data["Date"],
-                    y=theoretical_z_nanometers,
-                    mode="lines+markers",
-                    name=f"{channel} theoretical",
+                    x=[reference_start, reference_end],
+                    y=[theoretical_z_nanometers, theoretical_z_nanometers],
+                    mode="lines",
+                    name=f"{channel} theoretical ({reference_month})",
                     legendgroup=channel,
                     line=dict(
                         color=channel_colors.get(channel),
                         width=2,
                         dash="dash",
                     ),
-                    marker=dict(
-                        size=6,
-                        symbol="circle-open",
-                    ),
                     opacity=0.75,
                     hovertemplate=(
                         "<b>%{fullData.name}</b><br>"
-                        "Date: %{x|%b %Y}<br>"
                         "Theoretical Z: %{y:.0f} nm"
                         "<extra></extra>"
                     ),
@@ -703,6 +786,13 @@ def run_psf_analysis(
         return None
 
     print(f"Found " f"{len(csv_files)} " f"CSV file(s).")
+
+    target_month = get_target_month(microscope)
+
+    print(
+        "Theoretical reference month:",
+        target_month or "latest available",
+    )
 
     # ----------------------------------------------
     # Detect objectives
@@ -867,6 +957,7 @@ def run_psf_analysis(
             objective,
             plot_folder,
             microscope,
+            target_month,
         )
 
         if xy_plot is not None:
@@ -884,6 +975,7 @@ def run_psf_analysis(
             objective,
             plot_folder,
             microscope,
+            target_month,
         )
 
         if z_plot is not None:

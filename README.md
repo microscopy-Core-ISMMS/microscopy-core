@@ -116,7 +116,10 @@ MM-YY_WAVELENGTH.csv
 ```
 
 A laser-power microscope folder may also contain `target_month.txt`. Its value
-must use the `MM-YY` format.
+must use the `YYYY-MM` format. The month selects the reference measurement for
+laser-power analysis and the theoretical reference values in the matching PSF
+plots. If that month is unavailable for a series, the latest available month is
+used.
 
 PSF filenames must include the measurement month and year followed by an
 objective token such as `10x`, `20xW`, `40xO`, `63xO`, or `100x`:

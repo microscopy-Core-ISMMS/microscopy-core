@@ -102,5 +102,5 @@ Optical components drift, age, or become misaligned over time, causing gradual l
 ::: {.qa-method-note}
 #### Reading the PSF dashboards
 
-Lateral (XY) and axial (Z) values are displayed in nanometers. Solid lines show measured FWHM values; dashed lines show the corresponding theoretical values when supplied by the report. Use each objective dashboard to compare channels and follow resolution measurements across acquisition dates.
+Lateral (XY) and axial (Z) values are displayed in nanometers. Solid lines show measured FWHM values; dashed lines show the theoretical FWHM values from the microscope's configured reference month. If that month is unavailable for a series, the latest available theoretical value is used. Use each objective dashboard to compare channels and follow resolution measurements across acquisition dates.
 :::
