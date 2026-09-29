@@ -12,9 +12,9 @@ format:
 ::: {.laser-introduction}
 ## Introduction
 
-Chromatic aberration occurs when a microscope forms images from different wavelengths at slightly different positions. The displacement may be lateral (XY), axial (Z), or both. Even a small shift can create misleading separation between fluorescent labels and affect colocalization, distance, and object-association measurements.
+Quality assurance of co-registration in XY and Z is essential because it verifies whether multiple fluorescence channels are spatially aligned as expected. Even small chromatic shifts between channels can distort overlay images, misrepresent co-localization, and compromise quantitative analyses such as distance measurements. Accurate co-registration ensures that signals detected in different colors truly originate from the same physical location in the specimen.
 
-Routine chromatic-aberration assessment measures these channel-to-channel offsets with a multicolor reference sample. Tracking the results over time helps reveal changes in alignment and provides the correction values needed for reliable multichannel imaging.
+Optical components can drift, age, or become misaligned over time, leading to gradual channel-to-channel displacement in both lateral and axial dimensions. By routinely evaluating co-registration using multi-labeled reference samples, we can detect these shifts early, confirm consistent spatial alignment across the field of view, and maintain reliable, reproducible multicolor data. In short, co-registration monitoring provides the foundation for spatially accurate and quantitatively trustworthy fluorescence imaging.
 :::
 
 ## What is assessed
