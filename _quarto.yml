@@ -8,6 +8,7 @@ project:
     - microscopes/index.qmd
     - microscopes/laser_power/*.qmd
     - microscopes/psf/*.qmd
+    - microscopes/chromatic_aberration/*.qmd
     - image_analysis/*.qmd
     - image_analysis/fiji_imagej/*.qmd
 

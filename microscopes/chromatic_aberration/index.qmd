@@ -1,0 +1,48 @@
+---
+title: "Chromatic Aberration"
+toc: true
+format:
+  html:
+    page-layout: full
+    grid:
+      body-width: 1000px
+      gutter-width: 2rem
+---
+
+::: {.laser-introduction}
+## Introduction
+
+Chromatic aberration occurs when a microscope forms images from different wavelengths at slightly different positions. The displacement may be lateral (XY), axial (Z), or both. Even a small shift can create misleading separation between fluorescent labels and affect colocalization, distance, and object-association measurements.
+
+Routine chromatic-aberration assessment measures these channel-to-channel offsets with a multicolor reference sample. Tracking the results over time helps reveal changes in alignment and provides the correction values needed for reliable multichannel imaging.
+:::
+
+## What is assessed
+
+### Lateral registration
+
+The XY positions of the same reference objects are compared across fluorescence channels. The measured displacement shows how closely the channels remain registered within the image plane.
+
+### Axial registration
+
+The focal position of each channel is compared along Z. An axial offset can cause structures at the same physical depth to appear separated in a three-dimensional image.
+
+### Field dependence
+
+Registration is evaluated across the field of view because the size and direction of an offset may change from the center toward the image edges.
+
+::: {.callout-note}
+## Interpreting results
+
+Acceptable displacement depends on the objective, sampling, imaging mode, and spatial scale of the biological question. Chromatic offsets should be reviewed against the requirements of each quantitative workflow and corrected before interpreting channel overlap or separation.
+:::
+
+## Quality-assessment workflow
+
+1. Acquire a multicolor reference sample using the same optical configuration used for experiments.
+2. Detect corresponding reference objects in each fluorescence channel.
+3. Calculate lateral and axial offsets relative to a designated reference channel.
+4. Review the magnitude and direction of the offsets across the field of view.
+5. Apply and validate channel-registration corrections when required.
+
+Consistent acquisition settings and regular measurements make it possible to distinguish normal measurement variation from meaningful changes in microscope alignment.

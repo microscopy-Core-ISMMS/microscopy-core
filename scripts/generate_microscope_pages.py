@@ -437,6 +437,8 @@ navbar_lines = [
     ("            href: " "microscopes/" "laser_power/index.html"),
     ("          - text: " '"PSF Measurements"'),
     ("            href: " "microscopes/" "psf/index.html"),
+    ("          - text: " '"Chromatic Aberration"'),
+    ("            href: " "microscopes/" "chromatic_aberration/index.html"),
     ("      - text: " '"Image Analysis"'),
     "        menu:",
     ("          - text: " '"Introduction"'),
