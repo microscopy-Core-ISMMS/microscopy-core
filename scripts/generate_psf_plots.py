@@ -22,6 +22,8 @@ PSF_OUTPUT_DIR = PROJECT_DIR / "outputs" / "PSF_Measurements"
 
 MICROMETERS_TO_NANOMETERS = 1_000
 
+THEORETICAL_REFERENCE_EXCLUDED_MAGNIFICATIONS = {40, 63, 100}
+
 
 # --------------------------------------------------
 # Detect microscopes
@@ -79,6 +81,19 @@ def detect_objectives(csv_files: list[Path]) -> list[str]:
             objectives.add(match.group(1))
 
     return sorted(objectives)
+
+
+def should_plot_theoretical_reference(objective: str) -> bool:
+    """Return whether theoretical traces should be shown for an objective."""
+
+    match = re.match(r"(\d+)x", objective.lower())
+
+    if match is None:
+        return True
+
+    magnification = int(match.group(1))
+
+    return magnification not in THEORETICAL_REFERENCE_EXCLUDED_MAGNIFICATIONS
 
 
 # --------------------------------------------------
@@ -945,7 +960,11 @@ def run_psf_analysis(
 
         df_obj["Date_str"] = df_obj["Date"].dt.strftime("%Y-%m")
 
-        if target_month is not None:
+        plot_target_month = (
+            target_month if should_plot_theoretical_reference(objective) else None
+        )
+
+        if plot_target_month is not None:
             target_rows = df_obj[df_obj["Date_str"] == target_month]
 
             if target_rows.empty:
@@ -974,7 +993,7 @@ def run_psf_analysis(
             objective,
             plot_folder,
             microscope,
-            target_month,
+            plot_target_month,
         )
 
         if xy_plot is not None:
@@ -992,7 +1011,7 @@ def run_psf_analysis(
             objective,
             plot_folder,
             microscope,
-            target_month,
+            plot_target_month,
         )
 
         if z_plot is not None:
