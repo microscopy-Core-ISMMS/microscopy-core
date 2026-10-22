@@ -388,7 +388,7 @@ def get_channel_colors(microscope: str) -> dict:
         CH3 = orange
         CH4 = red
 
-    Zeiss:
+    Zeiss, Bruker, and Olympus:
         CH1 = red
         CH2 = orange
         CH3 = green
@@ -397,6 +397,25 @@ def get_channel_colors(microscope: str) -> dict:
 
     microscope_lower = microscope.lower()
 
+    zeiss_palette_manufacturers = (
+        "zeiss",
+        "lsm",
+        "bruker",
+        "olympus",
+        "olumpus",
+    )
+
+    if any(
+        manufacturer in microscope_lower for manufacturer in zeiss_palette_manufacturers
+    ):
+
+        return {
+            "CH1": "red",
+            "CH2": "orange",
+            "CH3": "green",
+            "CH4": "blue",
+        }
+
     if "leica" in microscope_lower:
 
         return {
@@ -404,15 +423,6 @@ def get_channel_colors(microscope: str) -> dict:
             "CH2": "green",
             "CH3": "orange",
             "CH4": "red",
-        }
-
-    if "zeiss" in microscope_lower or "lsm" in microscope_lower:
-
-        return {
-            "CH1": "red",
-            "CH2": "orange",
-            "CH3": "green",
-            "CH4": "blue",
         }
 
     # Default mapping
