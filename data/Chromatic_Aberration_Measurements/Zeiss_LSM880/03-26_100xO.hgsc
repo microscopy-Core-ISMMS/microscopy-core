@@ -1,0 +1,10 @@
+# Huygens Chromatic shift template file
+# Format: nested Tcl-style list
+# Saved: Wed Mar 04 15:44:05 EST 2026
+
+info {title {Chromatic shift template} version 2.1 templateName cShift_2026-03-04_100x date {Wed Mar 04 15:44:05 EST 2026}}
+taskList {shift:0 shift:1 shift:2 shift:3}
+shift:0 {q standard vector {-0.022 -0.002 -0.176} reference 0 channel 0 lambdaEm 672 lambdaEx 633 lambdaSted 0 mType confocal estMethod 0}
+shift:1 {q standard vector {0.002 -0.006 -0.023} reference 0 channel 1 lambdaEm 601 lambdaEx 561 lambdaSted 0 mType confocal estMethod 0}
+shift:2 {q standard vector {0.0 0.0 0.0} reference 1 channel 2 lambdaEm 526 lambdaEx 488 lambdaSted 0 mType confocal estMethod 0}
+shift:3 {q standard vector {0.142 0.325 -0.419} reference 0 channel 3 lambdaEm 443 lambdaEx 405 lambdaSted 0 mType confocal estMethod 0}
