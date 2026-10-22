@@ -20,7 +20,7 @@ CHROMATIC_OUTPUT_DIR = PROJECT_DIR / "outputs" / "Chromatic_Aberration_Measureme
 
 MICROMETERS_TO_NANOMETERS = 1_000
 
-CHANNEL_COLORS = {
+WAVELENGTH_COLORS = {
     405: "blue",
     488: "green",
     561: "orange",
@@ -172,7 +172,34 @@ def format_wavelength(wavelength: float) -> str:
     return f"{wavelength:g}"
 
 
-def get_channel_style(channel_data: pd.DataFrame) -> tuple[str, str]:
+def get_channel_colors(microscope: str) -> dict[int, str]:
+    """Return channel colors in the manufacturer's acquisition order."""
+
+    microscope_lower = microscope.lower()
+
+    if "leica" in microscope_lower:
+        return {
+            1: "blue",
+            2: "green",
+            3: "orange",
+            4: "red",
+        }
+
+    if "zeiss" in microscope_lower or "lsm" in microscope_lower:
+        return {
+            1: "red",
+            2: "orange",
+            3: "green",
+            4: "blue",
+        }
+
+    return {}
+
+
+def get_channel_style(
+    channel_data: pd.DataFrame,
+    microscope: str,
+) -> tuple[str, str]:
     """Return a stable legend label and color for one channel."""
 
     first_row = channel_data.iloc[0]
@@ -184,9 +211,13 @@ def get_channel_style(channel_data: pd.DataFrame) -> tuple[str, str]:
     if bool(first_row["Reference"]):
         label += " – reference"
 
-    color = CHANNEL_COLORS.get(
-        int(round(excitation)),
-        FALLBACK_COLORS[(channel - 1) % len(FALLBACK_COLORS)],
+    manufacturer_colors = get_channel_colors(microscope)
+    color = manufacturer_colors.get(
+        channel,
+        WAVELENGTH_COLORS.get(
+            int(round(excitation)),
+            FALLBACK_COLORS[(channel - 1) % len(FALLBACK_COLORS)],
+        ),
     )
 
     return label, color
@@ -258,6 +289,7 @@ def plot_lateral_shift(
     dataframe: pd.DataFrame,
     objective: str,
     output_folder: Path,
+    microscope: str,
 ) -> Path | None:
     """Plot lateral XY shift magnitude over time for one objective."""
 
@@ -272,7 +304,7 @@ def plot_lateral_shift(
 
     for channel in sorted(plot_data["Channel"].unique()):
         channel_data = plot_data[plot_data["Channel"] == channel].sort_values("Date")
-        label, color = get_channel_style(channel_data)
+        label, color = get_channel_style(channel_data, microscope)
         lateral_nanometers = channel_data["LateralShiftXY"] * MICROMETERS_TO_NANOMETERS
         component_nanometers = np.column_stack(
             [
@@ -318,6 +350,7 @@ def plot_axial_shift(
     dataframe: pd.DataFrame,
     objective: str,
     output_folder: Path,
+    microscope: str,
 ) -> Path | None:
     """Plot signed axial Z shift over time for one objective."""
 
@@ -332,7 +365,7 @@ def plot_axial_shift(
 
     for channel in sorted(plot_data["Channel"].unique()):
         channel_data = plot_data[plot_data["Channel"] == channel].sort_values("Date")
-        label, color = get_channel_style(channel_data)
+        label, color = get_channel_style(channel_data, microscope)
         axial_nanometers = channel_data["ShiftZ"] * MICROMETERS_TO_NANOMETERS
 
         figure.add_trace(
@@ -436,11 +469,13 @@ def run_chromatic_analysis(
             objective_data,
             objective,
             plot_folder,
+            microscope,
         )
         axial_plot = plot_axial_shift(
             objective_data,
             objective,
             plot_folder,
+            microscope,
         )
 
         for plot_path in (lateral_plot, axial_plot):
