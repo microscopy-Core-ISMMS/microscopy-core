@@ -20,6 +20,28 @@ Routine monitoring with multicolor reference samples helps detect alignment drif
 ## Microscope dashboards
 
 <div class="microscope-grid">
+<a class="microscope-card" href="Leica_Stellaris_Atran.html">
+<div class="microscope-card-top">
+<h3>Leica Stellaris Atran</h3>
+<span aria-hidden="true" class="card-arrow">→</span>
+</div>
+<span class="status-pill status-neutral">Measurements available</span>
+<div class="microscope-card-meta">
+<span><strong>5</strong> objectives</span>
+<span>Latest: Oct 2026</span>
+</div>
+</a>
+<a class="microscope-card" href="Zeiss_LSM880.html">
+<div class="microscope-card-top">
+<h3>Zeiss LSM880</h3>
+<span aria-hidden="true" class="card-arrow">→</span>
+</div>
+<span class="status-pill status-neutral">Measurements available</span>
+<div class="microscope-card-meta">
+<span><strong>6</strong> objectives</span>
+<span>Latest: Oct 2026</span>
+</div>
+</a>
 <a class="microscope-card" href="Zeiss_LSM980.html">
 <div class="microscope-card-top">
 <h3>Zeiss LSM980</h3>
@@ -35,16 +57,16 @@ Routine monitoring with multicolor reference samples helps detect alignment drif
 
 ## What is assessed
 
-### Lateral registration
+### X, Y, and Z registration
 
-The XY positions of the same reference objects are compared across fluorescence channels. The lateral magnitude shows how closely channels remain registered within the image plane.
+The signed X, Y, and Z positions of the same reference objects are compared across fluorescence channels. Separate component plots preserve the direction of displacement along every axis.
 
-### Axial registration
+### Three-dimensional displacement
 
-The focal position of each channel is compared along Z. The signed axial offset preserves the direction of displacement relative to the designated reference channel.
+The Euclidean distance combines all three components as √(X² + Y² + Z²), showing the total displacement from the designated reference channel.
 
 ::: {.qa-method-note}
 #### Reading the chromatic-aberration dashboards
 
-Shift vectors are displayed in nanometers relative to the 488 nm reference channel. The lateral plot shows the XY vector magnitude; hover details preserve the signed X and Y components. The axial plot shows the signed Z component. Use each objective dashboard to compare channels and follow registration over time.
+Shift vectors are displayed in nanometers relative to the 488 nm reference channel. X, Y, and Z are shown as separate signed plots, and the 3D-distance plot shows their Euclidean magnitude. Use each objective dashboard to compare channels and follow registration over time.
 :::

@@ -4,7 +4,6 @@ import re
 from datetime import datetime
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 
@@ -146,8 +145,9 @@ def parse_hgsc(file_path: Path) -> pd.DataFrame:
                 "ShiftX": shift_x,
                 "ShiftY": shift_y,
                 "ShiftZ": shift_z,
-                "LateralShiftXY": float(np.hypot(shift_x, shift_y)),
-                "TotalShiftXYZ": float(np.linalg.norm(vector)),
+                "EuclideanDistanceXYZ": float(
+                    (shift_x**2 + shift_y**2 + shift_z**2) ** 0.5
+                ),
                 "SourceFile": file_path.name,
             }
         )
@@ -285,16 +285,53 @@ def write_plot(figure: go.Figure, output_path: Path) -> Path:
     return output_path
 
 
-def plot_lateral_shift(
+def plot_chromatic_metric(
     dataframe: pd.DataFrame,
     objective: str,
     output_folder: Path,
     microscope: str,
+    metric: str,
 ) -> Path | None:
-    """Plot lateral XY shift magnitude over time for one objective."""
+    """Plot one shift component or the 3D Euclidean distance."""
 
+    plot_metrics = {
+        "X": {
+            "column": "ShiftX",
+            "title": "Chromatic Aberration X",
+            "yaxis": "Signed shift X (nm)",
+            "hover": "Shift X",
+            "filename": "Chromatic_Shift_X",
+        },
+        "Y": {
+            "column": "ShiftY",
+            "title": "Chromatic Aberration Y",
+            "yaxis": "Signed shift Y (nm)",
+            "hover": "Shift Y",
+            "filename": "Chromatic_Shift_Y",
+        },
+        "Z": {
+            "column": "ShiftZ",
+            "title": "Chromatic Aberration Z",
+            "yaxis": "Signed shift Z (nm)",
+            "hover": "Shift Z",
+            "filename": "Chromatic_Shift_Z",
+        },
+        "XYZ": {
+            "column": "EuclideanDistanceXYZ",
+            "title": "Chromatic Aberration 3D Distance",
+            "yaxis": "Euclidean distance XYZ (nm)",
+            "hover": "3D distance",
+            "filename": "Chromatic_Distance_XYZ",
+        },
+    }
+
+    if metric not in plot_metrics:
+        raise ValueError(f"unsupported chromatic-aberration metric: {metric}")
+
+    config = plot_metrics[metric]
+    value_column = config["column"]
     plot_data = dataframe[
-        dataframe["Date"].notna() & dataframe["LateralShiftXY"].notna()
+        dataframe["Date"].notna() & dataframe[value_column].notna()
     ].copy()
 
     if plot_data.empty:
@@ -305,19 +342,12 @@ def plot_lateral_shift(
     for channel in sorted(plot_data["Channel"].unique()):
         channel_data = plot_data[plot_data["Channel"] == channel].sort_values("Date")
         label, color = get_channel_style(channel_data, microscope)
-        lateral_nanometers = channel_data["LateralShiftXY"] * MICROMETERS_TO_NANOMETERS
-        component_nanometers = np.column_stack(
-            [
-                channel_data["ShiftX"] * MICROMETERS_TO_NANOMETERS,
-                channel_data["ShiftY"] * MICROMETERS_TO_NANOMETERS,
-            ]
-        )
+        shift_nanometers = channel_data[value_column] * MICROMETERS_TO_NANOMETERS
 
         figure.add_trace(
             go.Scatter(
                 x=channel_data["Date"],
-                y=lateral_nanometers,
-                customdata=component_nanometers,
+                y=shift_nanometers,
                 mode="lines+markers",
                 name=label,
                 line=dict(color=color, width=2),
@@ -325,9 +355,7 @@ def plot_lateral_shift(
                 hovertemplate=(
                     "<b>%{fullData.name}</b><br>"
                     "Date: %{x|%b %Y}<br>"
-                    "Lateral shift: %{y:.0f} nm<br>"
-                    "X: %{customdata[0]:.0f} nm<br>"
-                    "Y: %{customdata[1]:.0f} nm"
+                    f"{config['hover']}: %{{y:.0f}} nm"
                     "<extra></extra>"
                 ),
             )
@@ -335,66 +363,14 @@ def plot_lateral_shift(
 
     apply_plot_layout(
         figure,
-        title=f"Chromatic Aberration XY - Objective {objective.upper()}",
-        yaxis_title="Lateral shift XY (nm)",
+        title=f"{config['title']} - Objective {objective.upper()}",
+        yaxis_title=config["yaxis"],
         date_range=get_plot_date_range(plot_data),
     )
 
     return write_plot(
         figure,
-        output_folder / f"Chromatic_Shift_XY_{objective}.html",
-    )
-
-
-def plot_axial_shift(
-    dataframe: pd.DataFrame,
-    objective: str,
-    output_folder: Path,
-    microscope: str,
-) -> Path | None:
-    """Plot signed axial Z shift over time for one objective."""
-
-    plot_data = dataframe[
-        dataframe["Date"].notna() & dataframe["ShiftZ"].notna()
-    ].copy()
-
-    if plot_data.empty:
-        return None
-
-    figure = go.Figure()
-
-    for channel in sorted(plot_data["Channel"].unique()):
-        channel_data = plot_data[plot_data["Channel"] == channel].sort_values("Date")
-        label, color = get_channel_style(channel_data, microscope)
-        axial_nanometers = channel_data["ShiftZ"] * MICROMETERS_TO_NANOMETERS
-
-        figure.add_trace(
-            go.Scatter(
-                x=channel_data["Date"],
-                y=axial_nanometers,
-                mode="lines+markers",
-                name=label,
-                line=dict(color=color, width=2),
-                marker=dict(size=8),
-                hovertemplate=(
-                    "<b>%{fullData.name}</b><br>"
-                    "Date: %{x|%b %Y}<br>"
-                    "Axial shift Z: %{y:.0f} nm"
-                    "<extra></extra>"
-                ),
-            )
-        )
-
-    apply_plot_layout(
-        figure,
-        title=f"Chromatic Aberration Z - Objective {objective.upper()}",
-        yaxis_title="Axial shift Z (nm)",
-        date_range=get_plot_date_range(plot_data),
-    )
-
-    return write_plot(
-        figure,
-        output_folder / f"Chromatic_Shift_Z_{objective}.html",
+        output_folder / f"{config['filename']}_{objective}.html",
     )
 
 
@@ -451,7 +427,7 @@ def run_chromatic_analysis(
     plot_folder = output_dir / "plots"
     plot_folder.mkdir(parents=True, exist_ok=True)
 
-    for old_plot in plot_folder.glob("Chromatic_Shift_*.html"):
+    for old_plot in plot_folder.glob("Chromatic_*.html"):
         old_plot.unlink()
 
     generated_plots = []
@@ -465,20 +441,18 @@ def run_chromatic_analysis(
     for objective in objectives:
         objective_data = combined_df[combined_df["Objective"] == objective].copy()
 
-        lateral_plot = plot_lateral_shift(
-            objective_data,
-            objective,
-            plot_folder,
-            microscope,
-        )
-        axial_plot = plot_axial_shift(
-            objective_data,
-            objective,
-            plot_folder,
-            microscope,
-        )
+        metric_plots = [
+            plot_chromatic_metric(
+                objective_data,
+                objective,
+                plot_folder,
+                microscope,
+                metric,
+            )
+            for metric in ("X", "Y", "Z", "XYZ")
+        ]
 
-        for plot_path in (lateral_plot, axial_plot):
+        for plot_path in metric_plots:
             if plot_path is not None:
                 generated_plots.append(plot_path)
                 print(f"Saved: {plot_path.name}")

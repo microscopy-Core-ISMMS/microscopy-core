@@ -380,51 +380,32 @@ def read_chromatic_summary(combined_csv: Path) -> list[dict]:
             for row in latest_rows
             if row.get("Reference", "").strip().lower() not in {"true", "1"}
         ]
-        previous_non_reference = []
 
-        if len(dates) > 1:
-            previous_non_reference = [
-                row
-                for row in rows
-                if row.get("Date") == dates[-2]
-                and row.get("Reference", "").strip().lower() not in {"true", "1"}
+        latest_metrics = {}
+
+        for metric_name, column in (
+            ("x", "ShiftX"),
+            ("y", "ShiftY"),
+            ("z", "ShiftZ"),
+            ("distance", "EuclideanDistanceXYZ"),
+        ):
+            values = [
+                abs(value)
+                for row in latest_non_reference
+                if (value := optional_float(row.get(column))) is not None
             ]
-
-        latest_lateral_values = [
-            value
-            for row in latest_non_reference
-            if (value := optional_float(row.get("LateralShiftXY"))) is not None
-        ]
-        latest_axial_values = [
-            abs(value)
-            for row in latest_non_reference
-            if (value := optional_float(row.get("ShiftZ"))) is not None
-        ]
-        previous_lateral_values = [
-            value
-            for row in previous_non_reference
-            if (value := optional_float(row.get("LateralShiftXY"))) is not None
-        ]
-
-        latest_lateral = max(latest_lateral_values, default=None)
-        latest_axial = max(latest_axial_values, default=None)
-        previous_lateral = max(previous_lateral_values, default=None)
-        lateral_change_percent = None
-
-        if latest_lateral is not None and previous_lateral not in (None, 0):
-            lateral_change_percent = ((latest_lateral / previous_lateral) - 1) * 100
+            latest_metrics[metric_name] = max(values, default=None)
 
         summaries.append(
             {
                 "objective": objective,
                 "latest_date": latest_date[:7],
-                "latest_lateral_nm": (
-                    latest_lateral * 1000 if latest_lateral is not None else None
-                ),
-                "latest_axial_nm": (
-                    latest_axial * 1000 if latest_axial is not None else None
-                ),
-                "lateral_change_percent": lateral_change_percent,
+                **{
+                    f"latest_{metric_name}_nm": (
+                        value * 1000 if value is not None else None
+                    )
+                    for metric_name, value in latest_metrics.items()
+                },
                 "channel_count": len(
                     {row.get("Channel") for row in latest_rows if row.get("Channel")}
                 ),
@@ -1815,20 +1796,20 @@ chromatic_index_lines.extend(
         "",
         "## What is assessed",
         "",
-        "### Lateral registration",
+        "### X, Y, and Z registration",
         "",
         (
-            "The XY positions of the same reference objects are compared "
-            "across fluorescence channels. The lateral magnitude shows how "
-            "closely channels remain registered within the image plane."
+            "The signed X, Y, and Z positions of the same reference objects "
+            "are compared across fluorescence channels. Separate component "
+            "plots preserve the direction of displacement along every axis."
         ),
         "",
-        "### Axial registration",
+        "### Three-dimensional displacement",
         "",
         (
-            "The focal position of each channel is compared along Z. The "
-            "signed axial offset preserves the direction of displacement "
-            "relative to the designated reference channel."
+            "The Euclidean distance combines all three components as "
+            "√(X² + Y² + Z²), showing the total displacement from the "
+            "designated reference channel."
         ),
         "",
         "::: {.qa-method-note}",
@@ -1836,10 +1817,10 @@ chromatic_index_lines.extend(
         "",
         (
             "Shift vectors are displayed in nanometers relative to the "
-            "488 nm reference channel. The lateral plot shows the XY vector "
-            "magnitude; hover details preserve the signed X and Y components. "
-            "The axial plot shows the signed Z component. Use each objective "
-            "dashboard to compare channels and follow registration over time."
+            "488 nm reference channel. X, Y, and Z are shown as separate "
+            "signed plots, and the 3D-distance plot shows their Euclidean "
+            "magnitude. Use each objective dashboard to compare channels and "
+            "follow registration over time."
         ),
         ":::",
     ]
@@ -1870,27 +1851,30 @@ for microscope_dir in chromatic_microscopes:
     summary_rows = read_chromatic_summary(combined_chromatic_csv)
     summary_by_objective = {row["objective"]: row for row in summary_rows}
 
-    xy_plots = []
-    z_plots = []
+    metric_patterns = {
+        "x": "Chromatic_Shift_X_*.html",
+        "y": "Chromatic_Shift_Y_*.html",
+        "z": "Chromatic_Shift_Z_*.html",
+        "distance": "Chromatic_Distance_XYZ_*.html",
+    }
+    plots_by_metric = {}
 
     if chromatic_plot_dir.exists():
-        xy_plots = sorted(
-            chromatic_plot_dir.glob("Chromatic_Shift_XY_*.html"),
-            key=lambda path: path.name.lower(),
-        )
-        z_plots = sorted(
-            chromatic_plot_dir.glob("Chromatic_Shift_Z_*.html"),
-            key=lambda path: path.name.lower(),
-        )
+        for metric, pattern in metric_patterns.items():
+            prefix = pattern.removesuffix("*.html")
+            plots_by_metric[metric] = {
+                plot.stem.removeprefix(prefix): plot
+                for plot in sorted(
+                    chromatic_plot_dir.glob(pattern),
+                    key=lambda path: path.name.lower(),
+                )
+            }
 
-    xy_by_objective = {
-        plot.stem.replace("Chromatic_Shift_XY_", ""): plot for plot in xy_plots
-    }
-    z_by_objective = {
-        plot.stem.replace("Chromatic_Shift_Z_", ""): plot for plot in z_plots
-    }
     objectives = sorted(
-        set(xy_by_objective) | set(z_by_objective) | set(summary_by_objective),
+        set().union(
+            summary_by_objective,
+            *(metric_plots.keys() for metric_plots in plots_by_metric.values()),
+        ),
         key=objective_sort_key,
     )
     latest_month = max(
@@ -1922,8 +1906,9 @@ for microscope_dir in chromatic_microscopes:
         '<p class="laser-eyebrow">Registration quality assurance</p>',
         "<h2>Measurement overview</h2>",
         (
-            "<p>Review the latest lateral and axial channel shifts, then "
-            "inspect the registration history for each objective.</p>"
+            "<p>Review the latest X, Y, and Z channel shifts and their 3D "
+            "distance, then inspect the registration history for each "
+            "objective.</p>"
         ),
         "</div>",
         (
@@ -1979,14 +1964,14 @@ for microscope_dir in chromatic_microscopes:
 
         for objective in objectives:
             display_objective = objective_label(objective)
-            xy_plot = xy_by_objective.get(objective)
-            z_plot = z_by_objective.get(objective)
             summary = summary_by_objective.get(objective)
             color = objective_color(objective)
 
             if summary:
-                latest_lateral_text = format_length(summary.get("latest_lateral_nm"))
-                latest_axial_text = format_length(summary.get("latest_axial_nm"))
+                latest_x_text = format_length(summary.get("latest_x_nm"))
+                latest_y_text = format_length(summary.get("latest_y_nm"))
+                latest_z_text = format_length(summary.get("latest_z_nm"))
+                latest_distance_text = format_length(summary.get("latest_distance_nm"))
                 latest_date = format_month(summary.get("latest_date"))
                 channel_count = summary.get("channel_count", 0)
                 channel_text = (
@@ -1996,28 +1981,14 @@ for microscope_dir in chromatic_microscopes:
                 session_text = (
                     f"{session_count} session{'s' if session_count != 1 else ''}"
                 )
-                change = summary.get("lateral_change_percent")
-
-                if change is None:
-                    change_text = "No prior measurement"
-                    change_class = "trend-neutral"
-                elif change < 0:
-                    change_text = f"{abs(change):.1f}% smaller vs prior"
-                    change_class = "trend-up"
-                elif change > 0:
-                    change_text = f"{change:.1f}% larger vs prior"
-                    change_class = "trend-down"
-                else:
-                    change_text = "No change vs prior"
-                    change_class = "trend-neutral"
             else:
-                latest_lateral_text = "—"
-                latest_axial_text = "—"
+                latest_x_text = "—"
+                latest_y_text = "—"
+                latest_z_text = "—"
+                latest_distance_text = "—"
                 latest_date = "Not available"
                 channel_text = "—"
                 session_text = "No sessions"
-                change_text = "No prior measurement"
-                change_class = "trend-neutral"
 
             chromatic_lines.extend(
                 [
@@ -2027,108 +1998,101 @@ for microscope_dir in chromatic_microscopes:
                     "",
                     '<div class="wave-summary-row">',
                     '<div class="wave-latest">',
-                    '<span class="metric-label">Largest lateral shift</span>',
-                    f'<strong class="metric-value">{latest_lateral_text}</strong>',
-                    f'<span class="metric-context">{latest_date}</span>',
+                    '<span class="metric-label">Largest 3D distance</span>',
+                    f'<strong class="metric-value">{latest_distance_text}</strong>',
+                    (
+                        f'<span class="metric-context">{latest_date} · '
+                        f"{channel_text} · {session_text}</span>"
+                    ),
                     "</div>",
                     '<div class="wave-metric">',
-                    '<span class="metric-label">Largest |axial| shift</span>',
-                    f"<strong>{latest_axial_text}</strong>",
+                    '<span class="metric-label">Largest |X| shift</span>',
+                    f"<strong>{latest_x_text}</strong>",
                     "</div>",
                     '<div class="wave-metric">',
-                    '<span class="metric-label">Channels at latest</span>',
-                    f"<strong>{channel_text}</strong>",
+                    '<span class="metric-label">Largest |Y| shift</span>',
+                    f"<strong>{latest_y_text}</strong>",
                     "</div>",
-                    '<div class="wave-status">',
-                    f'<span class="status-pill status-neutral">{session_text}</span>',
-                    f'<span class="trend-label {change_class}">{change_text}</span>',
+                    '<div class="wave-metric">',
+                    '<span class="metric-label">Largest |Z| shift</span>',
+                    f"<strong>{latest_z_text}</strong>",
                     "</div>",
                     "</div>",
                     "",
                     "::: {.grid}",
                     "",
-                    "::: {.g-col-12 .g-col-md-6 .laser-chart-card}",
-                    "",
-                    "#### Lateral chromatic shift (XY)",
-                    "",
-                    (
-                        '<p class="chart-description">Lateral shift magnitude '
-                        "relative to the 488 nm reference channel.</p>"
-                    ),
-                    "",
                 ]
             )
 
-            if xy_plot is not None:
-                xy_plot_path = (
-                    "../../outputs/Chromatic_Aberration_Measurements/"
-                    f"{microscope}/plots/{xy_plot.name}"
-                )
-                chromatic_lines.extend(
-                    [
-                        '<div class="plotly-dashboard">',
-                        (
-                            f'<iframe src="{xy_plot_path}" width="100%" '
-                            'height="500" '
-                            f'title="{title} {display_objective} lateral '
-                            'chromatic shift history" '
-                            'style="border:none; width:100%;" loading="lazy">'
-                            "</iframe>"
-                        ),
-                        "</div>",
-                        "",
-                    ]
-                )
-            else:
-                chromatic_lines.extend(
-                    ["No lateral chromatic-shift plot is available.", ""]
-                )
-
-            chromatic_lines.extend(
-                [
-                    ":::",
-                    "",
-                    "::: {.g-col-12 .g-col-md-6 .laser-chart-card}",
-                    "",
-                    "#### Axial chromatic shift (Z)",
-                    "",
-                    (
-                        '<p class="chart-description">Signed axial shift '
-                        "relative to the 488 nm reference channel.</p>"
-                    ),
-                    "",
-                ]
+            chart_specs = (
+                (
+                    "x",
+                    "X-axis chromatic shift",
+                    "Signed X-axis displacement relative to the reference channel.",
+                    "X-axis chromatic shift history",
+                ),
+                (
+                    "y",
+                    "Y-axis chromatic shift",
+                    "Signed Y-axis displacement relative to the reference channel.",
+                    "Y-axis chromatic shift history",
+                ),
+                (
+                    "z",
+                    "Z-axis chromatic shift",
+                    "Signed Z-axis displacement relative to the reference channel.",
+                    "Z-axis chromatic shift history",
+                ),
+                (
+                    "distance",
+                    "3D Euclidean distance",
+                    "Total displacement calculated as √(X² + Y² + Z²).",
+                    "3D Euclidean chromatic distance history",
+                ),
             )
 
-            if z_plot is not None:
-                z_plot_path = (
-                    "../../outputs/Chromatic_Aberration_Measurements/"
-                    f"{microscope}/plots/{z_plot.name}"
-                )
+            for metric, chart_title, description, iframe_title in chart_specs:
+                plot = plots_by_metric.get(metric, {}).get(objective)
                 chromatic_lines.extend(
                     [
-                        '<div class="plotly-dashboard">',
-                        (
-                            f'<iframe src="{z_plot_path}" width="100%" '
-                            'height="500" '
-                            f'title="{title} {display_objective} axial '
-                            'chromatic shift history" '
-                            'style="border:none; width:100%;" loading="lazy">'
-                            "</iframe>"
-                        ),
-                        "</div>",
+                        "::: {.g-col-12 .g-col-md-6 .laser-chart-card}",
+                        "",
+                        f"#### {chart_title}",
+                        "",
+                        f'<p class="chart-description">{description}</p>',
                         "",
                     ]
                 )
-            else:
-                chromatic_lines.extend(
-                    ["No axial chromatic-shift plot is available.", ""]
-                )
+
+                if plot is not None:
+                    plot_path = (
+                        "../../outputs/Chromatic_Aberration_Measurements/"
+                        f"{microscope}/plots/{plot.name}"
+                    )
+                    chromatic_lines.extend(
+                        [
+                            '<div class="plotly-dashboard">',
+                            (
+                                f'<iframe src="{plot_path}" width="100%" '
+                                'height="500" '
+                                f'title="{title} {display_objective} '
+                                f'{iframe_title}" '
+                                'style="border:none; width:100%;" loading="lazy">'
+                                "</iframe>"
+                            ),
+                            "</div>",
+                            "",
+                        ]
+                    )
+                else:
+                    chromatic_lines.extend(
+                        [f"No {chart_title.lower()} plot is available.", ""]
+                    )
+
+                chromatic_lines.extend([":::", ""])
 
             chromatic_lines.extend(
                 [
-                    ":::",
-                    "",
                     ":::",
                     "",
                     ":::",
