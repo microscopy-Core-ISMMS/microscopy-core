@@ -5,44 +5,46 @@ format:
   html:
     page-layout: full
     grid:
-      body-width: 1000px
+      body-width: 1180px
       gutter-width: 2rem
 ---
 
 ::: {.laser-introduction}
 ## Introduction
 
-Quality assurance of co-registration in XY and Z is essential because it verifies whether multiple fluorescence channels are spatially aligned as expected. Even small chromatic shifts between channels can distort overlay images, misrepresent co-localization, and compromise quantitative analyses such as distance measurements. Accurate co-registration ensures that signals detected in different colors truly originate from the same physical location in the specimen.
+Quality assurance of co-registration in XY and Z verifies whether multiple fluorescence channels are spatially aligned as expected. Even small chromatic shifts can distort overlay images, misrepresent co-localization, and compromise quantitative distance measurements.
 
-Optical components can drift, age, or become misaligned over time, leading to gradual channel-to-channel displacement in both lateral and axial dimensions. By routinely evaluating co-registration using multi-labeled reference samples, we can detect these shifts early, confirm consistent spatial alignment across the field of view, and maintain reliable, reproducible multicolor data. In short, co-registration monitoring provides the foundation for spatially accurate and quantitatively trustworthy fluorescence imaging.
+Routine monitoring with multicolor reference samples helps detect alignment drift and supports spatially accurate, reproducible imaging.
 :::
+
+## Microscope dashboards
+
+<div class="microscope-grid">
+<a class="microscope-card" href="Zeiss_LSM980.html">
+<div class="microscope-card-top">
+<h3>Zeiss LSM980</h3>
+<span aria-hidden="true" class="card-arrow">→</span>
+</div>
+<span class="status-pill status-neutral">Measurements available</span>
+<div class="microscope-card-meta">
+<span><strong>5</strong> objectives</span>
+<span>Latest: Oct 2026</span>
+</div>
+</a>
+</div>
 
 ## What is assessed
 
 ### Lateral registration
 
-The XY positions of the same reference objects are compared across fluorescence channels. The measured displacement shows how closely the channels remain registered within the image plane.
+The XY positions of the same reference objects are compared across fluorescence channels. The lateral magnitude shows how closely channels remain registered within the image plane.
 
 ### Axial registration
 
-The focal position of each channel is compared along Z. An axial offset can cause structures at the same physical depth to appear separated in a three-dimensional image.
+The focal position of each channel is compared along Z. The signed axial offset preserves the direction of displacement relative to the designated reference channel.
 
-### Field dependence
+::: {.qa-method-note}
+#### Reading the chromatic-aberration dashboards
 
-Registration is evaluated across the field of view because the size and direction of an offset may change from the center toward the image edges.
-
-::: {.callout-note}
-## Interpreting results
-
-Acceptable displacement depends on the objective, sampling, imaging mode, and spatial scale of the biological question. Chromatic offsets should be reviewed against the requirements of each quantitative workflow and corrected before interpreting channel overlap or separation.
+Shift vectors are displayed in nanometers relative to the 488 nm reference channel. The lateral plot shows the XY vector magnitude; hover details preserve the signed X and Y components. The axial plot shows the signed Z component. Use each objective dashboard to compare channels and follow registration over time.
 :::
-
-## Quality-assessment workflow
-
-1. Acquire a multicolor reference sample using the same optical configuration used for experiments.
-2. Detect corresponding reference objects in each fluorescence channel.
-3. Calculate lateral and axial offsets relative to a designated reference channel.
-4. Review the magnitude and direction of the offsets across the field of view.
-5. Apply and validate channel-registration corrections when required.
-
-Consistent acquisition settings and regular measurements make it possible to distinguish normal measurement variation from meaningful changes in microscope alignment.

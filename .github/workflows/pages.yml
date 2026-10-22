@@ -64,6 +64,10 @@ jobs:
         run: |
           python scripts/generate_psf_plots.py
 
+      - name: Generate chromatic-aberration analysis
+        run: |
+          python scripts/generate_chromabb.py
+
       - name: Check generated outputs
         run: |
           echo "Generated output files:"
@@ -89,6 +93,7 @@ jobs:
       # microscopes/index.qmd
       # microscopes/laser_power/*.qmd
       # microscopes/psf/*.qmd
+      # microscopes/chromatic_aberration/*.qmd
 
       - name: Render website pages
         run: |

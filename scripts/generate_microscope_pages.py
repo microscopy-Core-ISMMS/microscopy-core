@@ -24,6 +24,8 @@ LASER_DATA_DIR = DATA_DIR / "Laser_Power_Measurements"
 
 PSF_DATA_DIR = DATA_DIR / "PSF_Measurements"
 
+CHROMATIC_DATA_DIR = DATA_DIR / "Chromatic_Aberration_Measurements"
+
 
 # --------------------------------------------------
 # Website page directories
@@ -34,6 +36,8 @@ MICROSCOPE_PAGE_DIR = PROJECT_DIR / "microscopes"
 LASER_PAGE_DIR = MICROSCOPE_PAGE_DIR / "laser_power"
 
 PSF_PAGE_DIR = MICROSCOPE_PAGE_DIR / "psf"
+
+CHROMATIC_PAGE_DIR = MICROSCOPE_PAGE_DIR / "chromatic_aberration"
 
 
 # --------------------------------------------------
@@ -46,6 +50,11 @@ LASER_PAGE_DIR.mkdir(
 )
 
 PSF_PAGE_DIR.mkdir(
+    parents=True,
+    exist_ok=True,
+)
+
+CHROMATIC_PAGE_DIR.mkdir(
     parents=True,
     exist_ok=True,
 )
@@ -226,7 +235,7 @@ def format_power(value) -> str:
 
 
 def format_length(value) -> str:
-    """Format PSF values in nanometers for dashboard summaries."""
+    """Format length values in nanometers for dashboard summaries."""
 
     if value is None:
         return "—"
@@ -338,6 +347,98 @@ def read_psf_summary(combined_csv: Path) -> list[dict]:
     )
 
 
+def read_chromatic_summary(combined_csv: Path) -> list[dict]:
+    """Build one chromatic-aberration summary row per objective."""
+
+    if not combined_csv.exists():
+        return []
+
+    grouped: dict[str, list[dict]] = {}
+
+    with combined_csv.open(encoding="utf-8", newline="") as handle:
+        for row in csv.DictReader(handle):
+            objective = row.get("Objective", "").strip().lower()
+            date = row.get("Date", "").strip()
+
+            if not objective or not date:
+                continue
+
+            grouped.setdefault(objective, []).append(row)
+
+    summaries = []
+
+    for objective, rows in grouped.items():
+        dates = sorted({row["Date"] for row in rows if row.get("Date")})
+
+        if not dates:
+            continue
+
+        latest_date = dates[-1]
+        latest_rows = [row for row in rows if row.get("Date") == latest_date]
+        latest_non_reference = [
+            row
+            for row in latest_rows
+            if row.get("Reference", "").strip().lower() not in {"true", "1"}
+        ]
+        previous_non_reference = []
+
+        if len(dates) > 1:
+            previous_non_reference = [
+                row
+                for row in rows
+                if row.get("Date") == dates[-2]
+                and row.get("Reference", "").strip().lower() not in {"true", "1"}
+            ]
+
+        latest_lateral_values = [
+            value
+            for row in latest_non_reference
+            if (value := optional_float(row.get("LateralShiftXY"))) is not None
+        ]
+        latest_axial_values = [
+            abs(value)
+            for row in latest_non_reference
+            if (value := optional_float(row.get("ShiftZ"))) is not None
+        ]
+        previous_lateral_values = [
+            value
+            for row in previous_non_reference
+            if (value := optional_float(row.get("LateralShiftXY"))) is not None
+        ]
+
+        latest_lateral = max(latest_lateral_values, default=None)
+        latest_axial = max(latest_axial_values, default=None)
+        previous_lateral = max(previous_lateral_values, default=None)
+        lateral_change_percent = None
+
+        if latest_lateral is not None and previous_lateral not in (None, 0):
+            lateral_change_percent = ((latest_lateral / previous_lateral) - 1) * 100
+
+        summaries.append(
+            {
+                "objective": objective,
+                "latest_date": latest_date[:7],
+                "latest_lateral_nm": (
+                    latest_lateral * 1000 if latest_lateral is not None else None
+                ),
+                "latest_axial_nm": (
+                    latest_axial * 1000 if latest_axial is not None else None
+                ),
+                "lateral_change_percent": lateral_change_percent,
+                "channel_count": len(
+                    {row.get("Channel") for row in latest_rows if row.get("Channel")}
+                ),
+                "measurement_count": len(dates),
+                "record_count": len(rows),
+            }
+        )
+
+    return sorted(
+        summaries,
+        key=lambda row: objective_sort_key(row["objective"]),
+    )
+
+
 def objective_sort_key(
     name: str,
 ):
@@ -404,6 +505,12 @@ laser_microscopes = detect_microscopes(LASER_DATA_DIR)
 
 psf_microscopes = detect_microscopes(PSF_DATA_DIR)
 
+chromatic_microscopes = [
+    folder
+    for folder in detect_microscopes(CHROMATIC_DATA_DIR)
+    if any(folder.glob("*.hgsc"))
+]
+
 
 print(
     "Laser Power microscopes:",
@@ -413,6 +520,11 @@ print(
 print(
     "PSF microscopes:",
     ", ".join(folder.name for folder in psf_microscopes) or "None",
+)
+
+print(
+    "Chromatic Aberration microscopes:",
+    ", ".join(folder.name for folder in chromatic_microscopes) or "None",
 )
 
 
@@ -461,6 +573,8 @@ print("Generated navbar:")
 print("  Laser Power Measurements: " f"{len(laser_microscopes)} " "microscopes")
 
 print("  PSF Measurements: " f"{len(psf_microscopes)} " "microscopes")
+
+print("  Chromatic Aberration: " f"{len(chromatic_microscopes)} " "microscopes")
 
 
 # ==================================================
@@ -1620,6 +1734,456 @@ print("Generated " f"{len(psf_microscopes)} " "PSF microscope pages.")
 
 
 # ==================================================
+# CHROMATIC ABERRATION MEASUREMENTS
+# ==================================================
+
+
+# --------------------------------------------------
+# Chromatic-aberration landing page
+# --------------------------------------------------
+
+chromatic_index_lines = [
+    "---",
+    'title: "Chromatic Aberration"',
+    "toc: true",
+    "format:",
+    "  html:",
+    "    page-layout: full",
+    "    grid:",
+    "      body-width: 1180px",
+    "      gutter-width: 2rem",
+    "---",
+    "",
+    "::: {.laser-introduction}",
+    "## Introduction",
+    "",
+    (
+        "Quality assurance of co-registration in XY and Z verifies whether "
+        "multiple fluorescence channels are spatially aligned as expected. "
+        "Even small chromatic shifts can distort overlay images, misrepresent "
+        "co-localization, and compromise quantitative distance measurements."
+    ),
+    "",
+    (
+        "Routine monitoring with multicolor reference samples helps detect "
+        "alignment drift and supports spatially accurate, reproducible imaging."
+    ),
+    ":::",
+    "",
+    "## Microscope dashboards",
+    "",
+    '<div class="microscope-grid">',
+]
+
+
+for microscope_dir in chromatic_microscopes:
+    microscope = microscope_dir.name
+    title = display_name(microscope)
+    combined_csv = (
+        OUTPUT_DIR
+        / "Chromatic_Aberration_Measurements"
+        / microscope
+        / "combined_chromatic_aberration_data.csv"
+    )
+    summary = read_chromatic_summary(combined_csv)
+    latest_month = max(
+        (row.get("latest_date", "") for row in summary),
+        default="",
+    )
+    status = "Measurements available" if summary else "Analysis pending"
+
+    chromatic_index_lines.extend(
+        [
+            f'<a class="microscope-card" href="{microscope}.html">',
+            '<div class="microscope-card-top">',
+            f"<h3>{title}</h3>",
+            '<span aria-hidden="true" class="card-arrow">→</span>',
+            "</div>",
+            f'<span class="status-pill status-neutral">{status}</span>',
+            '<div class="microscope-card-meta">',
+            f"<span><strong>{len(summary)}</strong> objectives</span>",
+            f"<span>Latest: {format_month(latest_month)}</span>",
+            "</div>",
+            "</a>",
+        ]
+    )
+
+
+chromatic_index_lines.extend(
+    [
+        "</div>",
+        "",
+        "## What is assessed",
+        "",
+        "### Lateral registration",
+        "",
+        (
+            "The XY positions of the same reference objects are compared "
+            "across fluorescence channels. The lateral magnitude shows how "
+            "closely channels remain registered within the image plane."
+        ),
+        "",
+        "### Axial registration",
+        "",
+        (
+            "The focal position of each channel is compared along Z. The "
+            "signed axial offset preserves the direction of displacement "
+            "relative to the designated reference channel."
+        ),
+        "",
+        "::: {.qa-method-note}",
+        "#### Reading the chromatic-aberration dashboards",
+        "",
+        (
+            "Shift vectors are displayed in nanometers relative to the "
+            "488 nm reference channel. The lateral plot shows the XY vector "
+            "magnitude; hover details preserve the signed X and Y components. "
+            "The axial plot shows the signed Z component. Use each objective "
+            "dashboard to compare channels and follow registration over time."
+        ),
+        ":::",
+    ]
+)
+
+
+(CHROMATIC_PAGE_DIR / "index.qmd").write_text(
+    "\n".join(chromatic_index_lines) + "\n",
+    encoding="utf-8",
+)
+
+
+print("Generated Chromatic Aberration landing page.")
+
+
+# --------------------------------------------------
+# Create one chromatic-aberration page per microscope
+# --------------------------------------------------
+
+for microscope_dir in chromatic_microscopes:
+    microscope = microscope_dir.name
+    title = display_name(microscope)
+    chromatic_output_dir = OUTPUT_DIR / "Chromatic_Aberration_Measurements" / microscope
+    chromatic_plot_dir = chromatic_output_dir / "plots"
+    combined_chromatic_csv = (
+        chromatic_output_dir / "combined_chromatic_aberration_data.csv"
+    )
+    summary_rows = read_chromatic_summary(combined_chromatic_csv)
+    summary_by_objective = {row["objective"]: row for row in summary_rows}
+
+    xy_plots = []
+    z_plots = []
+
+    if chromatic_plot_dir.exists():
+        xy_plots = sorted(
+            chromatic_plot_dir.glob("Chromatic_Shift_XY_*.html"),
+            key=lambda path: path.name.lower(),
+        )
+        z_plots = sorted(
+            chromatic_plot_dir.glob("Chromatic_Shift_Z_*.html"),
+            key=lambda path: path.name.lower(),
+        )
+
+    xy_by_objective = {
+        plot.stem.replace("Chromatic_Shift_XY_", ""): plot for plot in xy_plots
+    }
+    z_by_objective = {
+        plot.stem.replace("Chromatic_Shift_Z_", ""): plot for plot in z_plots
+    }
+    objectives = sorted(
+        set(xy_by_objective) | set(z_by_objective) | set(summary_by_objective),
+        key=objective_sort_key,
+    )
+    latest_month = max(
+        (row.get("latest_date", "") for row in summary_rows),
+        default="",
+    )
+    measurement_count = sum(row.get("measurement_count", 0) for row in summary_rows)
+    record_count = sum(row.get("record_count", 0) for row in summary_rows)
+    overall_status = "Measurements available" if summary_rows else "Analysis pending"
+
+    chromatic_lines = [
+        "---",
+        f'title: "{title}"',
+        "toc: true",
+        "format:",
+        "  html:",
+        "    page-layout: full",
+        "    grid:",
+        "      body-width: 1250px",
+        "      margin-width: 220px",
+        "      gutter-width: 1.5rem",
+        "other-links:",
+        '  - text: "← Back to Chromatic Aberration"',
+        "    href: index.html",
+        "---",
+        "",
+        '<div class="laser-dashboard-hero">',
+        '<div class="laser-dashboard-heading">',
+        '<p class="laser-eyebrow">Registration quality assurance</p>',
+        "<h2>Measurement overview</h2>",
+        (
+            "<p>Review the latest lateral and axial channel shifts, then "
+            "inspect the registration history for each objective.</p>"
+        ),
+        "</div>",
+        (
+            '<span class="status-pill status-large status-neutral">'
+            f"{overall_status}</span>"
+        ),
+        "</div>",
+        "",
+        '<div class="laser-kpi-grid">',
+        '<div class="laser-kpi">',
+        '<span class="kpi-label">Objectives monitored</span>',
+        f'<strong class="kpi-value">{len(objectives)}</strong>',
+        "</div>",
+        '<div class="laser-kpi">',
+        '<span class="kpi-label">Latest measurement</span>',
+        (
+            '<strong class="kpi-value kpi-value-text">'
+            f"{format_month(latest_month)}</strong>"
+        ),
+        "</div>",
+        '<div class="laser-kpi">',
+        '<span class="kpi-label">Measurement sessions</span>',
+        f'<strong class="kpi-value">{measurement_count}</strong>',
+        "</div>",
+        '<div class="laser-kpi">',
+        '<span class="kpi-label">Channel records</span>',
+        f'<strong class="kpi-value">{record_count}</strong>',
+        "</div>",
+        "</div>",
+        "",
+    ]
+
+    if objectives:
+        chromatic_lines.extend(
+            [
+                (
+                    '<nav class="wavelength-nav objective-nav" '
+                    'aria-label="Jump to objective">'
+                ),
+                '<span class="wavelength-nav-label">Jump to</span>',
+            ]
+        )
+
+        for objective in objectives:
+            color = objective_color(objective)
+            label = objective_label(objective)
+            chromatic_lines.append(
+                f'<a href="#objective-{objective}" style="--laser-color: {color}">'
+                f'<span class="wavelength-dot"></span>{label}</a>'
+            )
+
+        chromatic_lines.extend(["</nav>", ""])
+
+        for objective in objectives:
+            display_objective = objective_label(objective)
+            xy_plot = xy_by_objective.get(objective)
+            z_plot = z_by_objective.get(objective)
+            summary = summary_by_objective.get(objective)
+            color = objective_color(objective)
+
+            if summary:
+                latest_lateral_text = format_length(summary.get("latest_lateral_nm"))
+                latest_axial_text = format_length(summary.get("latest_axial_nm"))
+                latest_date = format_month(summary.get("latest_date"))
+                channel_count = summary.get("channel_count", 0)
+                channel_text = (
+                    f"{channel_count} channel{'s' if channel_count != 1 else ''}"
+                )
+                session_count = summary.get("measurement_count", 0)
+                session_text = (
+                    f"{session_count} session{'s' if session_count != 1 else ''}"
+                )
+                change = summary.get("lateral_change_percent")
+
+                if change is None:
+                    change_text = "No prior measurement"
+                    change_class = "trend-neutral"
+                elif change < 0:
+                    change_text = f"{abs(change):.1f}% smaller vs prior"
+                    change_class = "trend-up"
+                elif change > 0:
+                    change_text = f"{change:.1f}% larger vs prior"
+                    change_class = "trend-down"
+                else:
+                    change_text = "No change vs prior"
+                    change_class = "trend-neutral"
+            else:
+                latest_lateral_text = "—"
+                latest_axial_text = "—"
+                latest_date = "Not available"
+                channel_text = "—"
+                session_text = "No sessions"
+                change_text = "No prior measurement"
+                change_class = "trend-neutral"
+
+            chromatic_lines.extend(
+                [
+                    ("::: {.laser-wave-section " f'style="--laser-color: {color};"}}'),
+                    "",
+                    f"### {display_objective} objective {{#objective-{objective}}}",
+                    "",
+                    '<div class="wave-summary-row">',
+                    '<div class="wave-latest">',
+                    '<span class="metric-label">Largest lateral shift</span>',
+                    f'<strong class="metric-value">{latest_lateral_text}</strong>',
+                    f'<span class="metric-context">{latest_date}</span>',
+                    "</div>",
+                    '<div class="wave-metric">',
+                    '<span class="metric-label">Largest |axial| shift</span>',
+                    f"<strong>{latest_axial_text}</strong>",
+                    "</div>",
+                    '<div class="wave-metric">',
+                    '<span class="metric-label">Channels at latest</span>',
+                    f"<strong>{channel_text}</strong>",
+                    "</div>",
+                    '<div class="wave-status">',
+                    f'<span class="status-pill status-neutral">{session_text}</span>',
+                    f'<span class="trend-label {change_class}">{change_text}</span>',
+                    "</div>",
+                    "</div>",
+                    "",
+                    "::: {.grid}",
+                    "",
+                    "::: {.g-col-12 .g-col-md-6 .laser-chart-card}",
+                    "",
+                    "#### Lateral chromatic shift (XY)",
+                    "",
+                    (
+                        '<p class="chart-description">Lateral shift magnitude '
+                        "relative to the 488 nm reference channel.</p>"
+                    ),
+                    "",
+                ]
+            )
+
+            if xy_plot is not None:
+                xy_plot_path = (
+                    "../../outputs/Chromatic_Aberration_Measurements/"
+                    f"{microscope}/plots/{xy_plot.name}"
+                )
+                chromatic_lines.extend(
+                    [
+                        '<div class="plotly-dashboard">',
+                        (
+                            f'<iframe src="{xy_plot_path}" width="100%" '
+                            'height="500" '
+                            f'title="{title} {display_objective} lateral '
+                            'chromatic shift history" '
+                            'style="border:none; width:100%;" loading="lazy">'
+                            "</iframe>"
+                        ),
+                        "</div>",
+                        "",
+                    ]
+                )
+            else:
+                chromatic_lines.extend(
+                    ["No lateral chromatic-shift plot is available.", ""]
+                )
+
+            chromatic_lines.extend(
+                [
+                    ":::",
+                    "",
+                    "::: {.g-col-12 .g-col-md-6 .laser-chart-card}",
+                    "",
+                    "#### Axial chromatic shift (Z)",
+                    "",
+                    (
+                        '<p class="chart-description">Signed axial shift '
+                        "relative to the 488 nm reference channel.</p>"
+                    ),
+                    "",
+                ]
+            )
+
+            if z_plot is not None:
+                z_plot_path = (
+                    "../../outputs/Chromatic_Aberration_Measurements/"
+                    f"{microscope}/plots/{z_plot.name}"
+                )
+                chromatic_lines.extend(
+                    [
+                        '<div class="plotly-dashboard">',
+                        (
+                            f'<iframe src="{z_plot_path}" width="100%" '
+                            'height="500" '
+                            f'title="{title} {display_objective} axial '
+                            'chromatic shift history" '
+                            'style="border:none; width:100%;" loading="lazy">'
+                            "</iframe>"
+                        ),
+                        "</div>",
+                        "",
+                    ]
+                )
+            else:
+                chromatic_lines.extend(
+                    ["No axial chromatic-shift plot is available.", ""]
+                )
+
+            chromatic_lines.extend(
+                [
+                    ":::",
+                    "",
+                    ":::",
+                    "",
+                    ":::",
+                    "",
+                ]
+            )
+    else:
+        chromatic_lines.extend(
+            ["No chromatic-aberration plots are currently available.", ""]
+        )
+
+    chromatic_lines.extend(
+        [
+            "## Download Data {.unnumbered .unlisted}",
+            "",
+        ]
+    )
+
+    if combined_chromatic_csv.exists():
+        csv_link = (
+            "../../outputs/Chromatic_Aberration_Measurements/"
+            f"{microscope}/combined_chromatic_aberration_data.csv"
+        )
+        chromatic_lines.extend(
+            [
+                (
+                    f"[Download {title} chromatic-aberration data]"
+                    f"({csv_link})"
+                    "{.btn .btn-primary}"
+                ),
+                "",
+            ]
+        )
+    else:
+        chromatic_lines.extend(
+            ["The combined chromatic-aberration data file is not available.", ""]
+        )
+
+    chromatic_page_path = CHROMATIC_PAGE_DIR / f"{microscope}.qmd"
+    chromatic_page_path.write_text(
+        "\n".join(chromatic_lines) + "\n",
+        encoding="utf-8",
+    )
+
+    print(f"Generated Chromatic Aberration page: {chromatic_page_path.name}")
+
+
+print(
+    "Generated "
+    f"{len(chromatic_microscopes)} "
+    "Chromatic Aberration microscope pages."
+)
+
+
+# ==================================================
 # FINISHED
 # ==================================================
 
@@ -1634,3 +2198,5 @@ print("----------------------------------------")
 print("Laser Power pages: " f"{LASER_PAGE_DIR}")
 
 print("PSF pages: " f"{PSF_PAGE_DIR}")
+
+print("Chromatic Aberration pages: " f"{CHROMATIC_PAGE_DIR}")

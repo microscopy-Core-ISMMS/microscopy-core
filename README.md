@@ -13,7 +13,8 @@ published automatically through GitHub Pages.
 - Longitudinal laser-power measurements organized by microscope and wavelength
 - Point-spread-function (PSF) measurements organized by microscope, objective,
   and channel
-- Interactive Plotly charts, including PSF plots displayed in nanometers
+- Chromatic-aberration measurements from Huygens shift templates
+- Interactive Plotly charts, with PSF and chromatic-shift values in nanometers
 - Downloadable combined CSV and Excel summaries
 - Automatically generated Quarto pages and navigation
 - Automated code-quality checks and GitHub Pages deployment
@@ -24,13 +25,16 @@ published automatically through GitHub Pages.
 microscopy-core/
 ├── data/
 │   ├── Laser_Power_Measurements/   # Source laser-power records
-│   └── PSF_Measurements/           # Source PSF records
+│   ├── PSF_Measurements/           # Source PSF records
+│   └── Chromatic_Aberration_Measurements/
 ├── image_analysis/                  # Image-analysis documentation
 ├── images/                          # Website images and screenshots
 ├── microscopes/                     # Quarto microscope pages
 │   ├── laser_power/
-│   └── psf/
+│   ├── psf/
+│   └── chromatic_aberration/
 ├── scripts/
+│   ├── generate_chromabb.py
 │   ├── generate_microscope_pages.py
 │   └── generate_psf_plots.py
 ├── index.ipynb                      # Laser-power analysis and home page
@@ -80,6 +84,7 @@ Run the following commands from the repository root:
 python scripts/generate_microscope_pages.py
 quarto render index.ipynb --execute
 python scripts/generate_psf_plots.py
+python scripts/generate_chromabb.py
 python scripts/generate_microscope_pages.py
 quarto render
 ```
@@ -106,6 +111,7 @@ name in the relevant measurement directories. For example:
 ```text
 data/Laser_Power_Measurements/Zeiss_LSM880/
 data/PSF_Measurements/Zeiss_LSM880/
+data/Chromatic_Aberration_Measurements/Zeiss_LSM880/
 ```
 
 Laser-power filenames use the measurement month, year, and wavelength:
@@ -128,6 +134,14 @@ objective token such as `10x`, `20xW`, `40xO`, `63xO`, or `100x`:
 ```text
 01-26_10x.csv
 07-25_40xO.csv
+```
+
+Chromatic-aberration filenames use the same measurement-month and objective
+pattern with the Huygens chromatic-shift extension:
+
+```text
+01-26_10x.hgsc
+10-26_63xO.hgsc
 ```
 
 After adding data, run the complete build so plots, summaries, pages, and
