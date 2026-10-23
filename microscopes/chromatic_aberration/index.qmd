@@ -59,14 +59,14 @@ Routine monitoring with multicolor reference samples helps detect alignment drif
 
 ### X, Y, and Z registration
 
-The signed X, Y, and Z positions of the same reference objects are compared across fluorescence channels. Separate component plots preserve the direction of displacement along every axis.
+The signed X, Y, and Z positions of the same reference objects are retained in the downloadable data for component-level diagnostics. The dashboard focuses on their lateral and total Euclidean distances.
 
-### Three-dimensional displacement
+### Lateral and three-dimensional displacement
 
-The Euclidean distance combines all three components as √(X² + Y² + Z²), showing the total displacement from the designated reference channel.
+The lateral Euclidean distance combines X and Y as √(X² + Y²). The 3D Euclidean distance combines all three components as √(X² + Y² + Z²), showing total displacement from the designated reference channel.
 
 ::: {.qa-method-note}
 #### Reading the chromatic-aberration dashboards
 
-Shift vectors are displayed in nanometers relative to the 488 nm reference channel. X, Y, and Z are shown as separate signed plots, and the 3D-distance plot shows their Euclidean magnitude. Use each objective dashboard to compare channels and follow registration over time.
+Shift vectors are displayed in nanometers relative to the 488 nm reference channel. The lateral-distance plot shows the X/Y Euclidean magnitude, and the 3D-distance plot includes X, Y, and Z. The individual signed components remain in the downloadable data for future review.
 :::

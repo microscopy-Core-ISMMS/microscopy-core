@@ -487,6 +487,10 @@ a {
   align-items: center;
 }
 
+.chromatic-summary-row {
+  grid-template-columns: 1.2fr repeat(4, minmax(0, 1fr));
+}
+
 .wave-latest,
 .wave-metric,
 .wave-status {

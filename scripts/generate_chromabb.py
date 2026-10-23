@@ -145,6 +145,7 @@ def parse_hgsc(file_path: Path) -> pd.DataFrame:
                 "ShiftX": shift_x,
                 "ShiftY": shift_y,
                 "ShiftZ": shift_z,
+                "EuclideanDistanceXY": float((shift_x**2 + shift_y**2) ** 0.5),
                 "EuclideanDistanceXYZ": float(
                     (shift_x**2 + shift_y**2 + shift_z**2) ** 0.5
                 ),
@@ -292,7 +293,7 @@ def plot_chromatic_metric(
     microscope: str,
     metric: str,
 ) -> Path | None:
-    """Plot one shift component or the 3D Euclidean distance."""
+    """Plot one shift component or a Euclidean distance metric."""
 
     plot_metrics = {
         "X": {
@@ -315,6 +316,13 @@ def plot_chromatic_metric(
             "yaxis": "Signed shift Z (nm)",
             "hover": "Shift Z",
             "filename": "Chromatic_Shift_Z",
+        },
+        "XY": {
+            "column": "EuclideanDistanceXY",
+            "title": "Chromatic Aberration Lateral Distance",
+            "yaxis": "Lateral Euclidean distance XY (nm)",
+            "hover": "Lateral distance",
+            "filename": "Chromatic_Distance_XY",
         },
         "XYZ": {
             "column": "EuclideanDistanceXYZ",
@@ -441,6 +449,14 @@ def run_chromatic_analysis(
     for objective in objectives:
         objective_data = combined_df[combined_df["Objective"] == objective].copy()
 
+        # Keep the individual component plot support available for future use.
+        # Re-enable it by uncommenting "*_component_metrics" below.
+        _component_metrics = ("X", "Y", "Z")
+        enabled_metrics = (
+            # *_component_metrics,
+            "XY",
+            "XYZ",
+        )
         metric_plots = [
             plot_chromatic_metric(
                 objective_data,
@@ -449,7 +465,7 @@ def run_chromatic_analysis(
                 microscope,
                 metric,
             )
-            for metric in ("X", "Y", "Z", "XYZ")
+            for metric in enabled_metrics
         ]
 
         for plot_path in metric_plots:

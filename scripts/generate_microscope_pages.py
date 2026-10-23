@@ -387,6 +387,7 @@ def read_chromatic_summary(combined_csv: Path) -> list[dict]:
             ("x", "ShiftX"),
             ("y", "ShiftY"),
             ("z", "ShiftZ"),
+            ("lateral", "EuclideanDistanceXY"),
             ("distance", "EuclideanDistanceXYZ"),
         ):
             values = [
@@ -1800,16 +1801,18 @@ chromatic_index_lines.extend(
         "",
         (
             "The signed X, Y, and Z positions of the same reference objects "
-            "are compared across fluorescence channels. Separate component "
-            "plots preserve the direction of displacement along every axis."
+            "are retained in the downloadable data for component-level "
+            "diagnostics. The dashboard focuses on their lateral and total "
+            "Euclidean distances."
         ),
         "",
-        "### Three-dimensional displacement",
+        "### Lateral and three-dimensional displacement",
         "",
         (
-            "The Euclidean distance combines all three components as "
-            "√(X² + Y² + Z²), showing the total displacement from the "
-            "designated reference channel."
+            "The lateral Euclidean distance combines X and Y as √(X² + Y²). "
+            "The 3D Euclidean distance combines all three components as "
+            "√(X² + Y² + Z²), showing total displacement from the designated "
+            "reference channel."
         ),
         "",
         "::: {.qa-method-note}",
@@ -1817,10 +1820,10 @@ chromatic_index_lines.extend(
         "",
         (
             "Shift vectors are displayed in nanometers relative to the "
-            "488 nm reference channel. X, Y, and Z are shown as separate "
-            "signed plots, and the 3D-distance plot shows their Euclidean "
-            "magnitude. Use each objective dashboard to compare channels and "
-            "follow registration over time."
+            "488 nm reference channel. The lateral-distance plot shows the X/Y "
+            "Euclidean magnitude, and the 3D-distance plot includes X, Y, and "
+            "Z. The individual signed components remain in the downloadable "
+            "data for future review."
         ),
         ":::",
     ]
@@ -1851,10 +1854,16 @@ for microscope_dir in chromatic_microscopes:
     summary_rows = read_chromatic_summary(combined_chromatic_csv)
     summary_by_objective = {row["objective"]: row for row in summary_rows}
 
-    metric_patterns = {
+    # Retain the individual component plot patterns for easy restoration.
+    # Re-enable them by uncommenting "**_component_metric_patterns" below.
+    _component_metric_patterns = {
         "x": "Chromatic_Shift_X_*.html",
         "y": "Chromatic_Shift_Y_*.html",
         "z": "Chromatic_Shift_Z_*.html",
+    }
+    metric_patterns = {
+        # **_component_metric_patterns,
+        "lateral": "Chromatic_Distance_XY_*.html",
         "distance": "Chromatic_Distance_XYZ_*.html",
     }
     plots_by_metric = {}
@@ -1906,9 +1915,8 @@ for microscope_dir in chromatic_microscopes:
         '<p class="laser-eyebrow">Registration quality assurance</p>',
         "<h2>Measurement overview</h2>",
         (
-            "<p>Review the latest X, Y, and Z channel shifts and their 3D "
-            "distance, then inspect the registration history for each "
-            "objective.</p>"
+            "<p>Review the latest lateral and 3D channel distances, then inspect "
+            "the registration history for each objective.</p>"
         ),
         "</div>",
         (
@@ -1971,6 +1979,7 @@ for microscope_dir in chromatic_microscopes:
                 latest_x_text = format_length(summary.get("latest_x_nm"))
                 latest_y_text = format_length(summary.get("latest_y_nm"))
                 latest_z_text = format_length(summary.get("latest_z_nm"))
+                latest_lateral_text = format_length(summary.get("latest_lateral_nm"))
                 latest_distance_text = format_length(summary.get("latest_distance_nm"))
                 latest_date = format_month(summary.get("latest_date"))
                 channel_count = summary.get("channel_count", 0)
@@ -1985,6 +1994,7 @@ for microscope_dir in chromatic_microscopes:
                 latest_x_text = "—"
                 latest_y_text = "—"
                 latest_z_text = "—"
+                latest_lateral_text = "—"
                 latest_distance_text = "—"
                 latest_date = "Not available"
                 channel_text = "—"
@@ -1996,14 +2006,18 @@ for microscope_dir in chromatic_microscopes:
                     "",
                     f"### {display_objective} objective {{#objective-{objective}}}",
                     "",
-                    '<div class="wave-summary-row">',
+                    '<div class="wave-summary-row chromatic-summary-row">',
                     '<div class="wave-latest">',
-                    '<span class="metric-label">Largest 3D distance</span>',
-                    f'<strong class="metric-value">{latest_distance_text}</strong>',
+                    '<span class="metric-label">Largest lateral distance</span>',
+                    f'<strong class="metric-value">{latest_lateral_text}</strong>',
                     (
                         f'<span class="metric-context">{latest_date} · '
                         f"{channel_text} · {session_text}</span>"
                     ),
+                    "</div>",
+                    '<div class="wave-metric">',
+                    '<span class="metric-label">Largest 3D distance</span>',
+                    f"<strong>{latest_distance_text}</strong>",
                     "</div>",
                     '<div class="wave-metric">',
                     '<span class="metric-label">Largest |X| shift</span>',
@@ -2024,38 +2038,60 @@ for microscope_dir in chromatic_microscopes:
                 ]
             )
 
-            chart_specs = (
+            # Retain these individual component cards for future restoration.
+            # Re-enable them by uncommenting "*_component_chart_specs" below.
+            _component_chart_specs = (
                 (
                     "x",
                     "X-axis chromatic shift",
                     "Signed X-axis displacement relative to the reference channel.",
                     "X-axis chromatic shift history",
+                    "g-col-md-6",
                 ),
                 (
                     "y",
                     "Y-axis chromatic shift",
                     "Signed Y-axis displacement relative to the reference channel.",
                     "Y-axis chromatic shift history",
+                    "g-col-md-6",
                 ),
                 (
                     "z",
                     "Z-axis chromatic shift",
                     "Signed Z-axis displacement relative to the reference channel.",
                     "Z-axis chromatic shift history",
+                    "g-col-md-6",
+                ),
+            )
+            chart_specs = (
+                # *_component_chart_specs,
+                (
+                    "lateral",
+                    "Lateral Euclidean distance",
+                    "Lateral displacement calculated as √(X² + Y²).",
+                    "lateral Euclidean chromatic distance history",
+                    "g-col-md-6",
                 ),
                 (
                     "distance",
                     "3D Euclidean distance",
                     "Total displacement calculated as √(X² + Y² + Z²).",
                     "3D Euclidean chromatic distance history",
+                    "g-col-md-6",
                 ),
             )
 
-            for metric, chart_title, description, iframe_title in chart_specs:
+            for (
+                metric,
+                chart_title,
+                description,
+                iframe_title,
+                grid_class,
+            ) in chart_specs:
                 plot = plots_by_metric.get(metric, {}).get(objective)
                 chromatic_lines.extend(
                     [
-                        "::: {.g-col-12 .g-col-md-6 .laser-chart-card}",
+                        f"::: {{.g-col-12 .{grid_class} .laser-chart-card}}",
                         "",
                         f"#### {chart_title}",
                         "",
