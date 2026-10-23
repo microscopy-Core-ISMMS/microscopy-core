@@ -1,6 +1,6 @@
 ---
 title: "Point Spread Function Measurements"
-toc: false
+toc: true
 format:
   html:
     page-layout: full

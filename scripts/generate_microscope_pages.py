@@ -570,7 +570,7 @@ print("  Chromatic Aberration: " f"{len(chromatic_microscopes)} " "microscopes")
 laser_index_lines = [
     "---",
     'title: "Laser Power Measurements"',
-    "toc: false",
+    "toc: true",
     "format:",
     "  html:",
     "    page-layout: full",
@@ -1147,7 +1147,7 @@ print("Generated " f"{len(laser_microscopes)} " "Laser Power microscope pages.")
 psf_index_lines = [
     "---",
     'title: "Point Spread Function Measurements"',
-    "toc: false",
+    "toc: true",
     "format:",
     "  html:",
     "    page-layout: full",
