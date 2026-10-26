@@ -222,6 +222,39 @@ def format_month(value: str | None) -> str:
         return value
 
 
+def read_reference_month(microscope: str) -> str | None:
+    """Read the configured QA reference month for a microscope."""
+
+    target_file = LASER_DATA_DIR / microscope / "target_month.txt"
+
+    if not target_file.exists():
+        return None
+
+    reference_month = target_file.read_text(encoding="utf-8").strip()
+
+    if not reference_month:
+        return None
+
+    try:
+        datetime.strptime(reference_month, "%Y-%m")
+    except ValueError as exc:
+        raise ValueError(
+            f"{target_file} must contain a month in YYYY-MM format. "
+            f"Found: {reference_month}"
+        ) from exc
+
+    return reference_month
+
+
+def format_reference_month(value: str | None) -> str:
+    """Format a configured reference month or explain that none is set."""
+
+    if value is None:
+        return "Not configured"
+
+    return format_month(value)
+
+
 def format_power(value) -> str:
     """Format power values without hiding small measurements."""
 
@@ -706,6 +739,8 @@ for microscope_dir in laser_microscopes:
 
     summary_rows = read_laser_summary(microscope_output)
 
+    reference_month = read_reference_month(microscope)
+
     summary_by_wavelength = {row["wavelength_nm"]: row for row in summary_rows}
 
     # ----------------------------------------------
@@ -812,6 +847,13 @@ for microscope_dir in laser_microscopes:
         '<div class="laser-kpi">',
         '<span class="kpi-label">Latest measurement</span>',
         f'<strong class="kpi-value kpi-value-text">{format_month(latest_month)}</strong>',
+        "</div>",
+        '<div class="laser-kpi">',
+        '<span class="kpi-label">Reference month</span>',
+        (
+            '<strong class="kpi-value kpi-value-text">'
+            f"{format_reference_month(reference_month)}</strong>"
+        ),
         "</div>",
         '<div class="laser-kpi">',
         '<span class="kpi-label">Measurements on record</span>',
@@ -1267,6 +1309,8 @@ for microscope_dir in psf_microscopes:
 
     summary_rows = read_psf_summary(combined_psf_csv)
 
+    reference_month = read_reference_month(microscope)
+
     summary_by_objective = {row["objective"]: row for row in summary_rows}
 
     # ----------------------------------------------
@@ -1390,6 +1434,13 @@ for microscope_dir in psf_microscopes:
         '<div class="laser-kpi">',
         '<span class="kpi-label">Latest measurement</span>',
         f'<strong class="kpi-value kpi-value-text">{format_month(latest_month)}</strong>',
+        "</div>",
+        '<div class="laser-kpi">',
+        '<span class="kpi-label">Reference month</span>',
+        (
+            '<strong class="kpi-value kpi-value-text">'
+            f"{format_reference_month(reference_month)}</strong>"
+        ),
         "</div>",
         '<div class="laser-kpi">',
         '<span class="kpi-label">Measurement sessions</span>',
@@ -1852,6 +1903,7 @@ for microscope_dir in chromatic_microscopes:
         chromatic_output_dir / "combined_chromatic_aberration_data.csv"
     )
     summary_rows = read_chromatic_summary(combined_chromatic_csv)
+    reference_month = read_reference_month(microscope)
     summary_by_objective = {row["objective"]: row for row in summary_rows}
 
     # Retain the individual component plot patterns for easy restoration.
@@ -1935,6 +1987,13 @@ for microscope_dir in chromatic_microscopes:
         (
             '<strong class="kpi-value kpi-value-text">'
             f"{format_month(latest_month)}</strong>"
+        ),
+        "</div>",
+        '<div class="laser-kpi">',
+        '<span class="kpi-label">Reference month</span>',
+        (
+            '<strong class="kpi-value kpi-value-text">'
+            f"{format_reference_month(reference_month)}</strong>"
         ),
         "</div>",
         '<div class="laser-kpi">',
